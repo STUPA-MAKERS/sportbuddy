@@ -45,6 +45,27 @@ export class RequestsService {
     await this.repo.remove(entity);
     return true;
   }
+
+  async getAvailableSports(): Promise<string[]> {
+    const results = await this.repo
+      .createQueryBuilder('request')
+      .select('DISTINCT request.sport', 'sport')
+      .where('request.active = :active', { active: true })
+      .getRawMany();
+    
+    return results.map((r) => r.sport).filter(Boolean).sort();
+  }
+
+  async cleanupExpiredRequests(): Promise<number> {
+    const now = new Date();
+    const result = await this.repo
+      .createQueryBuilder()
+      .delete()
+      .where('expiresAt < :now', { now })
+      .execute();
+    
+    return result.affected || 0;
+  }
 }
 
 

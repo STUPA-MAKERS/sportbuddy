@@ -1,6 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { RequestsService } from './requests.service';
 import { RequestEntity } from './request.entity';
+import { EmailService } from '../email/email.service';
+import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 
 function generateToken(): string {
@@ -9,7 +11,11 @@ function generateToken(): string {
 
 @Controller('api/requests')
 export class RequestsController {
-  constructor(private readonly service: RequestsService) {}
+  constructor(
+    private readonly service: RequestsService,
+    private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post()
   async create(
@@ -23,16 +29,30 @@ export class RequestsController {
   ): Promise<RequestEntity> {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
-    return this.service.create({
+    const editToken = generateToken();
+    const deleteToken = generateToken();
+    
+    const request = await this.service.create({
       title: body.title,
       sport: body.sport,
       description: body.description,
       contactEmail: body.contactEmail,
-      editToken: generateToken(),
-      deleteToken: generateToken(),
+      editToken,
+      deleteToken,
       active: true,
       expiresAt,
     });
+
+    // Email mit Bearbeitungs-URLs versenden
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
+    await this.emailService.sendRequestCreatedEmail(body.contactEmail, {
+      requestTitle: body.title,
+      sportart: body.sport,
+      editUrl: `${frontendUrl}/edit/${editToken}`,
+      deleteUrl: `${frontendUrl}/delete/${deleteToken}`,
+    });
+
+    return request;
   }
 
   @Get()
@@ -54,13 +74,34 @@ export class RequestsController {
     @Param('token') token: string,
     @Body() updates: Partial<RequestEntity>,
   ) {
-    return this.service.updateByEditToken(token, updates);
+    const request = await this.service.updateByEditToken(token, updates);
+    
+    if (request) {
+      // Bestätigungs-Email versenden
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
+      await this.emailService.sendRequestUpdatedEmail(request.contactEmail, {
+        requestTitle: request.title,
+        editUrl: `${frontendUrl}/edit/${request.editToken}`,
+        deleteUrl: `${frontendUrl}/delete/${request.deleteToken}`,
+      });
+    }
+    
+    return request;
   }
 
   @Delete(':token')
   async deleteByDeleteToken(@Param('token') token: string) {
-    return { success: await this.service.deleteByDeleteToken(token) };
+    const request = await this.service.findByToken(token);
+    const success = await this.service.deleteByDeleteToken(token);
+    
+    if (success && request) {
+      // Bestätigungs-Email versenden
+      await this.emailService.sendRequestDeletedEmail(request.contactEmail, request.title);
+    }
+    
+    return { success };
   }
+
 }
 
 
