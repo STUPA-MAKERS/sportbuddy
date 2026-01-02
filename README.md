@@ -527,11 +527,11 @@ Bei Fragen oder Problemen:
 
 1. README durchlesen
 2. Logs prüfen: `docker compose logs`
-3. GitHub Issues erstellen (falls Repository vorhanden)
+3. GitHub Issues erstellen
 
 ## 📄 Lizenz
 
-Dieses Projekt wurde für die Hochschule Reutlingen entwickelt.
+Dieses Projekt wurde von Marc Brasche für die Hochschule Reutlingen entwickelt.
 
 ---
 
