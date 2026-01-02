@@ -1,144 +1,136 @@
-# Sportpartnerbörse Backend
+# Sportbuddy Backend
 
-Backend für die Sportpartnerbörse der Hochschule Reutlingen.
+NestJS Backend für die Sportpartnerbörse Hochschule Reutlingen.
 
-## Features
+## 🚀 Schnellstart
 
-- ✅ SMTP-basierter Email-Versand
-- ✅ Email-Templates mit Handlebars
-- ✅ Automatische Email-Benachrichtigungen
-- ✅ Docker-Support
-- ✅ TypeScript mit NestJS
+### Mit Docker (Empfohlen)
 
-## Setup
+```bash
+docker compose up -d --build backend
+```
+
+Backend läuft auf: http://localhost:3000
 
 ### Lokale Entwicklung
 
-1. **Abhängigkeiten installieren:**
-   ```bash
-   npm install
-   ```
-
-2. **Environment-Variablen konfigurieren:**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Bearbeiten Sie die `.env` Datei und tragen Sie Ihre SMTP-Daten ein:
-   ```env
-   SMTP_HOST=smtp.example.com
-   SMTP_PORT=587
-   SMTP_SECURE=false
-   SMTP_USER=your_email@example.com
-   SMTP_PASS=your_password
-   SMTP_FROM=noreply@sportpartnerboerse.de
-   ```
-
-3. **Server starten:**
-   ```bash
-   npm run start:dev
-   ```
-
-Der Server läuft auf `http://localhost:3000`
-
-### Mit Docker
-
 ```bash
-docker build -t sportpartnerboerse-backend .
-docker run -p 3000:3000 --env-file .env sportpartnerboerse-backend
+npm install
+npm run start:dev
 ```
 
-## API Endpoints
+## ⚙️ Konfiguration
 
-### Health Check
-- `GET /health` - Prüft ob der Server läuft
+Erstelle eine `.env` Datei im `backend/` Verzeichnis:
 
-### Email Test
-- `GET /email/test?to=test@example.com` - Sendet eine Test-Email
+```env
+# Datenbank
+DB_HOST=postgres
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=sportpartnerboerse
 
-### Email Endpoints (für später)
-- `POST /email/request-created` - Email bei neuer Anfrage
-- `POST /email/request-updated` - Email bei aktualisierter Anfrage
-- `POST /email/request-deleted` - Email bei gelöschter Anfrage
+# Server
+PORT=3000
+FRONTEND_URL=http://localhost:4200
 
-## SMTP-Konfiguration
+# SMTP (E-Mail)
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=ihre-email@example.com
+SMTP_PASS=ihr-passwort
+SMTP_FROM=noreply@sportpartnerboerse.de
+```
 
-### Beispiel: Gmail
+## 🛠 Technologie-Stack
+
+- **NestJS** (Node.js Framework)
+- **TypeORM** (ORM)
+- **PostgreSQL** (Datenbank)
+- **Nodemailer** (E-Mail-Versand)
+- **Handlebars** (E-Mail-Templates)
+
+## 📁 Struktur
+
+```
+src/
+├── requests/          # Request-Modul (CRUD-Operationen)
+│   ├── request.entity.ts
+│   ├── requests.controller.ts
+│   ├── requests.service.ts
+│   └── requests.module.ts
+├── email/            # E-Mail-Service
+│   ├── email.service.ts
+│   └── email.controller.ts
+├── cleanup/          # Automatische Bereinigung
+│   └── cleanup.service.ts
+└── main.ts           # Einstiegspunkt
+
+templates/
+└── emails/           # E-Mail-Templates (Handlebars)
+    ├── request-created.hbs
+    ├── request-updated.hbs
+    └── request-deleted.hbs
+```
+
+## 🔌 API-Endpunkte
+
+### Requests
+
+- `GET /api/requests` - Alle Anfragen abrufen
+- `GET /api/requests/:id` - Einzelne Anfrage abrufen
+- `POST /api/requests` - Neue Anfrage erstellen
+- `PATCH /api/requests/:token` - Anfrage bearbeiten (Token-basiert)
+- `DELETE /api/requests/:token` - Anfrage löschen (Token-basiert)
+- `GET /api/requests/sports/list` - Liste aller Sportarten
+
+### E-Mail (Test)
+
+- `GET /email/test?to=email@example.com` - Test-E-Mail versenden
+
+## 📧 E-Mail-Konfiguration
+
+### SMTP für gängige Anbieter
+
+**Gmail** (App-Passwort erforderlich!):
 ```env
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password  # App-Passwort erforderlich!
+SMTP_USER=ihre-email@gmail.com
+SMTP_PASS=ihr-app-passwort
 ```
 
-**Wichtig bei Gmail:** Sie müssen ein [App-Passwort](https://support.google.com/accounts/answer/185833) erstellen.
-
-### Beispiel: Office 365 / Outlook
+**Outlook/Office 365**:
 ```env
 SMTP_HOST=smtp.office365.com
 SMTP_PORT=587
 SMTP_SECURE=false
-SMTP_USER=your_email@outlook.com
-SMTP_PASS=your_password
 ```
 
-### Beispiel: Mailtrap (für Tests)
-```env
-SMTP_HOST=smtp.mailtrap.io
-SMTP_PORT=2525
-SMTP_SECURE=false
-SMTP_USER=your_mailtrap_user
-SMTP_PASS=your_mailtrap_pass
-```
+## 🔄 Automatische Bereinigung
 
-## Testing
+Abgelaufene Anfragen werden automatisch täglich um 2:00 Uhr gelöscht (via `@nestjs/schedule`).
 
-### Test-Email versenden
+## 🐛 Troubleshooting
 
-1. Server starten: `npm run start:dev`
-2. Im Browser öffnen: `http://localhost:3000/email/test?to=ihre-email@example.com`
+**Problem**: Datenbank-Verbindung schlägt fehl
+- Lösung: PostgreSQL-Container prüfen: `docker compose ps postgres`
+- Lösung: Environment-Variablen in `.env` prüfen
 
-Oder mit curl:
-```bash
-curl "http://localhost:3000/email/test?to=ihre-email@example.com"
-```
+**Problem**: E-Mails werden nicht versendet
+- Lösung: SMTP-Credentials in `.env` prüfen
+- Lösung: Test-Endpoint verwenden: `GET /email/test?to=test@example.com`
+- Lösung: Bei Gmail: App-Passwort verwenden (nicht normales Passwort!)
 
-## Email-Templates
+**Problem**: CORS-Fehler
+- Lösung: `FRONTEND_URL` in `.env` auf korrekte URL setzen
 
-Die Email-Templates befinden sich in `templates/emails/` und verwenden Handlebars-Syntax.
+## 📝 Wichtige Hinweise
 
-Verfügbare Templates:
-- `request-created.hbs` - Email bei neuer Anfrage
-- `request-updated.hbs` - Email bei aktualisierter Anfrage
-- `request-deleted.hbs` - Email bei gelöschter Anfrage
-
-## Troubleshooting
-
-### SMTP-Verbindung fehlgeschlagen
-- Prüfen Sie Ihre SMTP-Credentials in der `.env` Datei
-- Stellen Sie sicher, dass der SMTP-Port nicht blockiert ist
-- Bei Gmail: Verwenden Sie ein App-Passwort, nicht das normale Passwort
-- Prüfen Sie die Firewall-Einstellungen
-
-### Emails kommen nicht an
-- Prüfen Sie den Spam-Ordner
-- Verifizieren Sie die "From"-Adresse
-- Prüfen Sie die Server-Logs: `npm run start:dev`
-
-## Entwicklung
-
-```bash
-# Entwicklung mit Hot-Reload
-npm run start:dev
-
-# Build für Produktion
-npm run build
-
-# Produktion starten
-npm run start:prod
-
-# Tests ausführen
-npm test
-```
-
+- **Token-System**: Jede Anfrage erhält einen `editToken` und `deleteToken` für sichere Bearbeitung/Löschung
+- **E-Mail-Links**: Enthalten Token für Bearbeitung/Löschung
+- **Validierung**: Eingaben werden mit `class-validator` validiert
+- **CORS**: Nur die in `FRONTEND_URL` angegebene Domain ist erlaubt
