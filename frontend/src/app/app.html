@@ -1,0 +1,51 @@
+<div class="app-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a routerLink="/" class="logo">
+          <img src="/STUPA_Neu-Breit-Color-White.png" alt="STUPA Logo" class="logo-image" />
+          <div class="logo-text">
+            <span class="title">Sportpartnerbörse</span>
+            <span class="subtitle">Hochschule Reutlingen</span>
+          </div>
+        </a>
+        <nav class="nav">
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Startseite</a>
+          <a routerLink="/create" routerLinkActive="active">Anfrage erstellen</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <router-outlet />
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>Sportpartnerbörse</h3>
+          <p>Finde deinen Sportpartner an der Hochschule Reutlingen</p>
+        </div>
+        <div class="footer-section">
+          <h3>Links</h3>
+          <ul>
+            <li><a href="https://stupa.reutlingen.university/" target="_blank" rel="noopener">STUPA</a></li>
+            <li><a href="https://www.reutlingen-university.de/" target="_blank" rel="noopener">Hochschule Reutlingen</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Kontakt</h3>
+          <p>Bei Fragen wenden Sie sich an das STUPA</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; {{ currentYear }} Hochschule Reutlingen - Sportpartnerbörse</p>
+      </div>
+    </div>
+  </footer>
+</div>

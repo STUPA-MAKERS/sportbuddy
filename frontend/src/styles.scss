@@ -1,0 +1,345 @@
+/* PrimeNG 21 Styles - PrimeNG 21 verwendet automatisches Styling über @primeuix/styles */
+@import "primeicons/primeicons.css";
+
+/* STUPA Corporate Design - Hochschule Reutlingen */
+:root {
+  /* Markenfarbe der Hochschule Reutlingen */
+  --hsrt-gray: #707173; /* HSRT-1 CMYK 0 0 0 70 */
+  
+  /* Grün-Spektrum für Verfasste Studierendenschaft */
+  --hsrt-green-4: #0aa459; /* HSRT-Gruen-4 CMYK 80 0 80 0 */
+  --hsrt-green-6: #79b63e; /* HSRT-Gruen-6 CMYK 60 0 90 0 */
+  
+  /* Primärfarben basierend auf Corporate Design */
+  --stupa-primary: #707173; /* HSRT-1 Grau */
+  --stupa-secondary: #0aa459; /* HSRT-Gruen-4 */
+  --stupa-accent: #79b63e; /* HSRT-Gruen-6 */
+  --stupa-highlight: #0aa459; /* Grün für Hover/Aktiv */
+  
+  /* Neutrale Farben */
+  --stupa-light: #f5f5f5;
+  --stupa-white: #ffffff;
+  --stupa-text: #333333;
+  --stupa-text-light: #666666;
+  --stupa-gray-dark: #505152;
+  --stupa-gray-medium: #707173;
+  --stupa-gray-light: #e0e0e0;
+  
+  /* Typografie */
+  --font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-size-base: 16px;
+  
+  /* PrimeNG Theme Overrides - Helle Variante */
+  --p-inputtext-bg: #ffffff;
+  --p-inputtext-text-color: #333333;
+  --p-inputtext-border-color: #e0e0e0;
+  --p-inputtext-focus-border-color: #0aa459;
+  --p-select-bg: #ffffff;
+  --p-select-text-color: #333333;
+  --p-select-border-color: #e0e0e0;
+  --p-select-focus-border-color: #0aa459;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  color: var(--stupa-text);
+  background-color: var(--stupa-light);
+  line-height: 1.6;
+}
+
+/* PrimeNG Theme Anpassungen */
+.p-button {
+  font-family: var(--font-family);
+}
+
+/* Primary Buttons - Grün */
+.p-button-primary {
+  background-color: var(--hsrt-green-4);
+  border-color: var(--hsrt-green-4);
+  color: var(--stupa-white) !important;
+}
+
+.p-button-primary:hover {
+  background-color: var(--hsrt-green-6);
+  border-color: var(--hsrt-green-6);
+  color: var(--stupa-white) !important;
+}
+
+/* Secondary Buttons - Heller Hintergrund, dunkler Text */
+::ng-deep .p-button-secondary,
+::ng-deep .p-button.p-button-secondary {
+  background-color: var(--stupa-white) !important;
+  border: 1px solid var(--stupa-gray-medium) !important;
+  color: #1A1919 !important;
+}
+
+::ng-deep .p-button-secondary:hover,
+::ng-deep .p-button.p-button-secondary:hover {
+  background-color: var(--stupa-light) !important;
+  border-color: var(--stupa-gray-medium) !important;
+  color: #1A1919 !important;
+}
+
+/* Danger Buttons - Rot */
+::ng-deep .p-button-danger,
+::ng-deep .p-button.p-button-danger {
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  color: var(--stupa-white) !important;
+}
+
+::ng-deep .p-button-danger:hover,
+::ng-deep .p-button.p-button-danger:hover {
+  background-color: #c82333 !important;
+  border-color: #bd2130 !important;
+  color: var(--stupa-white) !important;
+}
+
+/* Info Buttons - Blau/Grün */
+::ng-deep .p-button-info,
+::ng-deep .p-button.p-button-info {
+  background-color: var(--hsrt-green-4) !important;
+  border-color: var(--hsrt-green-4) !important;
+  color: var(--stupa-white) !important;
+}
+
+::ng-deep .p-button-info:hover,
+::ng-deep .p-button.p-button-info:hover {
+  background-color: var(--hsrt-green-6) !important;
+  border-color: var(--hsrt-green-6) !important;
+  color: var(--stupa-white) !important;
+}
+
+/* Alle Buttons - Text immer gut lesbar */
+::ng-deep .p-button {
+  font-weight: 500;
+}
+
+::ng-deep .p-button:not(.p-button-primary):not(.p-button-danger):not(.p-button-info):not(.p-button-secondary) {
+  background-color: var(--stupa-white) !important;
+  border: 1px solid var(--stupa-gray-medium) !important;
+  color: #1A1919 !important;
+}
+
+::ng-deep .p-button:not(.p-button-primary):not(.p-button-danger):not(.p-button-info):not(.p-button-secondary):hover {
+  background-color: var(--stupa-light) !important;
+  border-color: var(--stupa-gray-medium) !important;
+  color: #1A1919 !important;
+}
+
+/* Layout */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Cards */
+.card {
+  background: var(--stupa-white);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  color: #1A1919;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Links */
+a {
+  color: var(--hsrt-green-4);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--hsrt-green-6);
+}
+
+/* Form Elements */
+.p-inputtext,
+.p-textarea {
+  width: 100%;
+  font-family: var(--font-family);
+  background-color: var(--stupa-white);
+  color: var(--stupa-text);
+  border: 1px solid var(--stupa-gray-light);
+}
+
+.p-inputtext:focus,
+.p-textarea:focus {
+  border-color: var(--hsrt-green-4);
+  box-shadow: 0 0 0 0.2rem rgba(10, 164, 89, 0.1);
+}
+
+/* PrimeNG Select - Helle Variante */
+::ng-deep p-select {
+  display: block;
+  width: 100%;
+  
+  .p-select {
+    width: 100%;
+    display: flex;
+    background-color: var(--stupa-white);
+    border: 1px solid var(--stupa-gray-light);
+    color: var(--stupa-text);
+    border-radius: 4px;
+    align-items: stretch;
+    
+    .p-select-label-container {
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      background-color: var(--stupa-white);
+      
+      input {
+        width: 100%;
+        background-color: var(--stupa-white);
+        color: var(--stupa-text);
+        border: none;
+        padding: 0.5rem;
+        font-size: 1rem;
+        flex: 1;
+      }
+      
+      input::placeholder {
+        color: var(--stupa-text-light);
+      }
+    }
+    
+    .p-select-clear {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--stupa-white);
+      color: var(--stupa-text);
+      border: none;
+      padding: 0.25rem;
+      margin-right: 0.25rem;
+      cursor: pointer;
+    }
+    
+    .p-select-trigger {
+      background-color: var(--stupa-white);
+      color: var(--stupa-text);
+      border-left: 1px solid var(--stupa-gray-light);
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      min-width: 2.5rem;
+      flex-shrink: 0;
+      
+      > * {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .p-select-trigger-icon,
+      button,
+      i {
+        color: var(--stupa-text);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+  
+  .p-select:focus-within,
+  .p-select.p-focus {
+    border-color: var(--hsrt-green-4);
+    box-shadow: 0 0 0 0.2rem rgba(10, 164, 89, 0.1);
+  }
+}
+
+::ng-deep .p-select-panel {
+  background-color: var(--stupa-white);
+  border: 1px solid var(--stupa-gray-light);
+  
+  .p-select-item {
+    color: var(--stupa-text);
+    background-color: var(--stupa-white);
+    
+    &:hover {
+      background-color: var(--stupa-light);
+    }
+    
+    &.p-highlight {
+      background-color: var(--hsrt-green-4);
+      color: var(--stupa-white);
+    }
+  }
+}
+
+/* PrimeNG Card - Helle Variante */
+::ng-deep .p-card {
+  background-color: var(--stupa-white) !important;
+  color: var(--stupa-text) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  
+  .p-card-header {
+    background-color: var(--stupa-white) !important;
+    color: var(--stupa-text) !important;
+    border-bottom: 1px solid var(--stupa-gray-light) !important;
+  }
+  
+  .p-card-body {
+    background-color: var(--stupa-white) !important;
+    color: var(--stupa-text) !important;
+  }
+  
+  .p-card-content {
+    color: var(--stupa-text) !important;
+  }
+  
+  .p-card-footer {
+    background-color: var(--stupa-white) !important;
+    border-top: 1px solid var(--stupa-gray-light) !important;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 15px;
+  }
+  
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+}

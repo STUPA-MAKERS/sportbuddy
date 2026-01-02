@@ -1,0 +1,97 @@
+<div class="edit-container">
+  <div class="container">
+    <div class="header-section">
+      <h1>Anfrage bearbeiten</h1>
+    </div>
+
+    @if (loading && !request) {
+      <p>Lade Anfrage...</p>
+    }
+
+    @if (error && !request) {
+      <div class="error-message">
+        <p>{{ error }}</p>
+        <p-button label="Zur Startseite" routerLink="/" />
+      </div>
+    }
+
+    @if (request) {
+      <p-card>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label for="title">Titel *</label>
+            <input
+              id="title"
+              type="text"
+              pInputText
+              formControlName="title"
+              [class.ng-invalid]="form.get('title')?.invalid && form.get('title')?.touched"
+            />
+            @if (form.get('title')?.invalid && form.get('title')?.touched) {
+              <small class="error">Titel ist erforderlich</small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="sport">Sportart *</label>
+            <p-select
+              id="sport"
+              formControlName="sport"
+              [options]="sports"
+              optionLabel="label"
+              optionValue="value"
+              [editable]="true"
+              [filter]="true"
+              placeholder="Sportart auswählen oder eingeben"
+              [showClear]="true"
+              styleClass="w-full"
+              [class.ng-invalid]="form.get('sport')?.invalid && form.get('sport')?.touched"
+            />
+            @if (form.get('sport')?.invalid && form.get('sport')?.touched) {
+              <small class="error">Bitte geben Sie eine Sportart ein</small>
+            }
+            <small class="info">Sie können eine vorhandene Sportart auswählen oder eine neue eingeben</small>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Beschreibung *</label>
+            <textarea
+              id="description"
+              pTextarea
+              formControlName="description"
+              rows="5"
+              [class.ng-invalid]="form.get('description')?.invalid && form.get('description')?.touched"
+            ></textarea>
+            @if (form.get('description')?.invalid && form.get('description')?.touched) {
+              <small class="error">Beschreibung ist erforderlich (min. 10 Zeichen)</small>
+            }
+          </div>
+
+          @if (error) {
+            <div class="error-message">
+              <p>{{ error }}</p>
+            </div>
+          }
+
+          <div class="form-actions">
+            <p-button
+              label="Abbrechen"
+              icon="pi pi-times"
+              severity="secondary"
+              [routerLink]="['/request', request.editToken]"
+              [disabled]="loading"
+            />
+            <p-button
+              type="submit"
+              label="Speichern"
+              icon="pi pi-check"
+              [loading]="loading"
+              [disabled]="form.invalid || loading"
+            />
+          </div>
+        </form>
+      </p-card>
+    }
+  </div>
+</div>
+

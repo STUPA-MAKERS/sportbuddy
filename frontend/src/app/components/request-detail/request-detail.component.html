@@ -1,0 +1,63 @@
+<div class="detail-container">
+  <div class="container">
+    @if (loading) {
+      <p>Lade Anfrage...</p>
+    }
+
+    @if (error) {
+      <div class="error-message">
+        <p>{{ error }}</p>
+        <p-button label="Zur Startseite" routerLink="/" />
+      </div>
+    }
+
+    @if (request) {
+      <p-card>
+        <div class="detail-header">
+          <h1>{{ request.title }}</h1>
+          <p-tag [value]="request.sport" severity="info" />
+        </div>
+
+        <div class="detail-content">
+          <p class="description">{{ request.description }}</p>
+          
+          <div class="detail-meta">
+            <div class="meta-item">
+              <span>Erstellt am</span>
+              <strong>{{ formatDate(request.createdAt) }}</strong>
+            </div>
+            @if (request.expiresAt) {
+              <div class="meta-item">
+                <span>Läuft ab am</span>
+                <strong>{{ formatDate(request.expiresAt) }}</strong>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="detail-actions">
+          <p-button
+            label="Zurück zur Übersicht"
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            routerLink="/"
+          />
+          @if (request.editToken === token) {
+            <p-button
+              label="Bearbeiten"
+              icon="pi pi-pencil"
+              [routerLink]="['/edit', request.editToken]"
+            />
+            <p-button
+              label="Löschen"
+              icon="pi pi-trash"
+              severity="danger"
+              [routerLink]="['/delete', request.deleteToken]"
+            />
+          }
+        </div>
+      </p-card>
+    }
+  </div>
+</div>
+

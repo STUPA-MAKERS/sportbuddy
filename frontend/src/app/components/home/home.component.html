@@ -1,0 +1,100 @@
+<div class="home-container">
+  <div class="container">
+    <div class="header-section">
+      <h1>Sportpartnerbörse</h1>
+      <p class="subtitle">Finde deinen Sportpartner an der Hochschule Reutlingen</p>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-card">
+        <label for="sport-filter">Sportart filtern:</label>
+        <p-select
+          id="sport-filter"
+          [options]="sports"
+          [(ngModel)]="selectedSport"
+          placeholder="Alle Sportarten"
+          [showClear]="true"
+          (onChange)="onSportChange()"
+          styleClass="w-full"
+        />
+        @if (selectedSport) {
+          <p-button
+            label="Filter zurücksetzen"
+            icon="pi pi-times"
+            severity="secondary"
+            size="small"
+            (onClick)="clearFilter()"
+            styleClass="mt-2"
+          />
+        }
+      </div>
+    </div>
+
+    @if (loading) {
+      <div class="loading">
+        <p>Lade Anfragen...</p>
+      </div>
+    }
+
+    @if (error) {
+      <div class="error-message">
+        <p>{{ error }}</p>
+      </div>
+    }
+
+    @if (!loading && !error && requests.length === 0) {
+      <div class="empty-state">
+        <p>Keine Anfragen gefunden.</p>
+        <p-button
+          label="Erste Anfrage erstellen"
+          icon="pi pi-plus"
+          routerLink="/create"
+        />
+      </div>
+    }
+
+    <div class="requests-grid">
+      @for (request of requests; track request.id) {
+        <p-card class="request-card">
+          <ng-template pTemplate="header">
+            <div class="card-header">
+              <h3>{{ request.title }}</h3>
+              <p-tag [value]="request.sport" severity="info" />
+            </div>
+          </ng-template>
+          
+          <div class="card-content">
+            <p class="description">{{ request.description }}</p>
+            <div class="card-meta">
+              <small>
+                <i class="pi pi-calendar"></i>
+                <span>Erstellt am {{ formatDate(request.createdAt) }}</span>
+              </small>
+            </div>
+          </div>
+          
+          <ng-template pTemplate="footer">
+            <div class="card-footer">
+              <p-button
+                label="Details anzeigen"
+                icon="pi pi-eye"
+                severity="secondary"
+                [routerLink]="['/request', request.editToken]"
+              />
+            </div>
+          </ng-template>
+        </p-card>
+      }
+    </div>
+
+    <div class="create-section">
+      <p-button
+        label="Neue Anfrage erstellen"
+        icon="pi pi-plus"
+        routerLink="/create"
+        styleClass="create-button"
+      />
+    </div>
+  </div>
+</div>
+

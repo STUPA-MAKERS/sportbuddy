@@ -1,0 +1,58 @@
+<div class="delete-container">
+  <div class="container">
+    <div class="header-section">
+      <h1>Anfrage löschen</h1>
+    </div>
+
+    @if (loading) {
+      <p>Lade Anfrage...</p>
+    }
+
+    @if (error && !request) {
+      <div class="error-message">
+        <p>{{ error }}</p>
+        <p-button label="Zur Startseite" routerLink="/" />
+      </div>
+    }
+
+    @if (request) {
+      <p-card>
+        <div class="warning-section">
+          <h2>⚠️ Möchten Sie diese Anfrage wirklich löschen?</h2>
+          <p>Diese Aktion kann nicht rückgängig gemacht werden.</p>
+        </div>
+
+        <div class="request-preview">
+          <h3>{{ request.title }}</h3>
+          <p><strong>Sportart</strong> {{ request.sport }}</p>
+          <p class="description">{{ request.description }}</p>
+        </div>
+
+        @if (error) {
+          <div class="error-message">
+            <p>{{ error }}</p>
+          </div>
+        }
+
+        <div class="form-actions">
+          <p-button
+            label="Abbrechen"
+            icon="pi pi-times"
+            severity="secondary"
+            [routerLink]="['/request', request.editToken]"
+            [disabled]="deleting"
+          />
+          <p-button
+            label="Endgültig löschen"
+            icon="pi pi-trash"
+            severity="danger"
+            [loading]="deleting"
+            [disabled]="deleting"
+            (onClick)="onDelete()"
+          />
+        </div>
+      </p-card>
+    }
+  </div>
+</div>
+
