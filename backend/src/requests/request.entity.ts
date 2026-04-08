@@ -15,6 +15,15 @@ export class RequestEntity {
   @Column({ type: 'text' })
   description: string;
 
+  @Column({ length: 32, nullable: true })
+  knowledgeLevel: string | null;
+
+  @Column({ length: 32, nullable: true })
+  gender: string | null;
+
+  @Column({ type: 'int', nullable: true })
+  age: number | null;
+
   @Index({ unique: true })
   @Column({ length: 128 })
   editToken: string;

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RequestEntity } from './request.entity';
+import { PREDEFINED_SPORTS } from './sports.constants';
 
 @Injectable()
 export class RequestsService {
@@ -26,6 +27,12 @@ export class RequestsService {
     });
   }
 
+  async findPublicById(id: string) {
+    return this.repo.findOne({
+      where: { id, active: true },
+    });
+  }
+
   async findByToken(token: string) {
     return this.repo.findOne({
       where: [{ editToken: token }, { deleteToken: token }],
@@ -47,13 +54,7 @@ export class RequestsService {
   }
 
   async getAvailableSports(): Promise<string[]> {
-    const results = await this.repo
-      .createQueryBuilder('request')
-      .select('DISTINCT request.sport', 'sport')
-      .where('request.active = :active', { active: true })
-      .getRawMany();
-    
-    return results.map((r) => r.sport).filter(Boolean).sort();
+    return [...PREDEFINED_SPORTS].sort((left, right) => left.localeCompare(right, 'de'));
   }
 
   async cleanupExpiredRequests(): Promise<number> {

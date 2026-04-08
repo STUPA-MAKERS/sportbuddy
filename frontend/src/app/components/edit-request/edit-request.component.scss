@@ -33,6 +33,7 @@
   }
   
   input,
+  select,
   textarea {
     width: 100%;
     background-color: var(--stupa-white);
@@ -41,6 +42,7 @@
   }
   
   input:focus,
+  select:focus,
   textarea:focus {
     border-color: var(--hsrt-green-4);
     box-shadow: 0 0 0 0.2rem rgba(10, 164, 89, 0.1);
@@ -62,6 +64,23 @@
   }
 }
 
+.native-select {
+  min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 4px;
+  appearance: auto;
+}
+
+.optional-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.optional-group {
+  margin-bottom: 1rem;
+}
+
 .error-message {
   background-color: #fee;
   color: #c33;
@@ -78,6 +97,10 @@
 }
 
 @media (max-width: 768px) {
+  .optional-grid {
+    grid-template-columns: 1fr;
+  }
+
   .form-actions {
     flex-direction: column;
     

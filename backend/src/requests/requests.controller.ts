@@ -1,13 +1,44 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
-import { RequestsService } from './requests.service';
-import { RequestEntity } from './request.entity';
-import { EmailService } from '../email/email.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { EmailService } from '../email/email.service';
+import { CreateReplyDto } from './dto/create-reply.dto';
+import { CreateRequestDto } from './dto/create-request.dto';
+import { UpdateRequestDto } from './dto/update-request.dto';
+import { RequestEntity } from './request.entity';
+import { RequestsService } from './requests.service';
 
 function generateToken(): string {
   return crypto.randomBytes(24).toString('hex');
 }
+
+type PublicRequestResponse = Pick<
+  RequestEntity,
+  | 'id'
+  | 'title'
+  | 'sport'
+  | 'description'
+  | 'knowledgeLevel'
+  | 'gender'
+  | 'age'
+  | 'active'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'expiresAt'
+>;
+
+type ManagedRequestResponse = PublicRequestResponse &
+  Pick<RequestEntity, 'contactEmail' | 'editToken' | 'deleteToken'>;
 
 @Controller('api/requests')
 export class RequestsController {
@@ -18,90 +49,142 @@ export class RequestsController {
   ) {}
 
   @Post()
-  async create(
-    @Body()
-    body: {
-      title: string;
-      sport: string;
-      description: string;
-      contactEmail: string;
-    },
-  ): Promise<RequestEntity> {
+  async create(@Body() body: CreateRequestDto): Promise<PublicRequestResponse> {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
     const editToken = generateToken();
     const deleteToken = generateToken();
-    
+
     const request = await this.service.create({
       title: body.title,
       sport: body.sport,
       description: body.description,
       contactEmail: body.contactEmail,
+      knowledgeLevel: body.knowledgeLevel ?? null,
+      gender: body.gender ?? null,
+      age: body.age ?? null,
       editToken,
       deleteToken,
       active: true,
       expiresAt,
     });
 
-    // Email mit Bearbeitungs-URLs versenden
     const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
     await this.emailService.sendRequestCreatedEmail(body.contactEmail, {
       requestTitle: body.title,
       sportart: body.sport,
+      frontendUrl,
       editUrl: `${frontendUrl}/edit/${editToken}`,
       deleteUrl: `${frontendUrl}/delete/${deleteToken}`,
     });
 
-    return request;
+    return this.toPublicResponse(request);
   }
 
   @Get()
   async list(@Query('sport') sport?: string, @Query('skip') skip?: string, @Query('take') take?: string) {
-    return this.service.findAll({
+    const requests = await this.service.findAll({
       sport,
       skip: skip ? parseInt(skip, 10) : 0,
       take: take ? parseInt(take, 10) : 20,
     });
+
+    return requests.map((request) => this.toPublicResponse(request));
   }
 
-  @Get(':token')
-  async getByToken(@Param('token') token: string) {
-    return this.service.findByToken(token);
+  @Get('manage/:token')
+  async getByToken(@Param('token') token: string): Promise<ManagedRequestResponse> {
+    const request = await this.service.findByToken(token);
+    if (!request) {
+      throw new NotFoundException('Anfrage nicht gefunden.');
+    }
+
+    return this.toManagedResponse(request);
   }
 
-  @Put(':token')
+  @Get(':id')
+  async getPublicById(@Param('id') id: string): Promise<PublicRequestResponse> {
+    const request = await this.service.findPublicById(id);
+    if (!request) {
+      throw new NotFoundException('Anfrage nicht gefunden.');
+    }
+
+    return this.toPublicResponse(request);
+  }
+
+  @Post(':id/replies')
+  async createReply(@Param('id') id: string, @Body() body: CreateReplyDto) {
+    const request = await this.service.findPublicById(id);
+    if (!request) {
+      throw new NotFoundException('Anfrage nicht gefunden.');
+    }
+
+    await this.emailService.sendRequestReplyEmail(request.contactEmail, {
+      requestTitle: request.title,
+      requestSport: request.sport,
+      senderName: body.name,
+      senderEmail: body.email,
+      message: body.message,
+    });
+
+    return { success: true };
+  }
+
+  @Put('manage/:token')
   async updateByEditToken(
     @Param('token') token: string,
-    @Body() updates: Partial<RequestEntity>,
-  ) {
+    @Body() updates: UpdateRequestDto,
+  ): Promise<ManagedRequestResponse> {
     const request = await this.service.updateByEditToken(token, updates);
-    
-    if (request) {
-      // Bestätigungs-Email versenden
-      const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
-      await this.emailService.sendRequestUpdatedEmail(request.contactEmail, {
-        requestTitle: request.title,
-        editUrl: `${frontendUrl}/edit/${request.editToken}`,
-        deleteUrl: `${frontendUrl}/delete/${request.deleteToken}`,
-      });
+    if (!request) {
+      throw new NotFoundException('Anfrage nicht gefunden.');
     }
-    
-    return request;
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
+    await this.emailService.sendRequestUpdatedEmail(request.contactEmail, {
+      requestTitle: request.title,
+      frontendUrl,
+      editUrl: `${frontendUrl}/edit/${request.editToken}`,
+      deleteUrl: `${frontendUrl}/delete/${request.deleteToken}`,
+    });
+
+    return this.toManagedResponse(request);
   }
 
-  @Delete(':token')
+  @Delete('manage/:token')
   async deleteByDeleteToken(@Param('token') token: string) {
     const request = await this.service.findByToken(token);
     const success = await this.service.deleteByDeleteToken(token);
-    
+
     if (success && request) {
-      // Bestätigungs-Email versenden
       await this.emailService.sendRequestDeletedEmail(request.contactEmail, request.title);
     }
-    
+
     return { success };
   }
 
+  private toPublicResponse(request: RequestEntity): PublicRequestResponse {
+    return {
+      id: request.id,
+      title: request.title,
+      sport: request.sport,
+      description: request.description,
+      knowledgeLevel: request.knowledgeLevel,
+      gender: request.gender,
+      age: request.age,
+      active: request.active,
+      createdAt: request.createdAt,
+      updatedAt: request.updatedAt,
+      expiresAt: request.expiresAt,
+    };
+  }
+
+  private toManagedResponse(request: RequestEntity): ManagedRequestResponse {
+    return {
+      ...this.toPublicResponse(request),
+      contactEmail: request.contactEmail,
+      editToken: request.editToken,
+      deleteToken: request.deleteToken,
+    };
+  }
 }
-
-

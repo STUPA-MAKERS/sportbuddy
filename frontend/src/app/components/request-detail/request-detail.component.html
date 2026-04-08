@@ -12,52 +12,133 @@
     }
 
     @if (request) {
-      <p-card>
-        <div class="detail-header">
-          <h1>{{ request.title }}</h1>
-          <p-tag [value]="request.sport" severity="info" />
-        </div>
+      <div class="detail-grid">
+        <p-card>
+          <div class="detail-header">
+            <h1>{{ request.title }}</h1>
+            <p-tag [value]="request.sport" severity="info" />
+          </div>
 
-        <div class="detail-content">
-          <p class="description">{{ request.description }}</p>
-          
-          <div class="detail-meta">
-            <div class="meta-item">
-              <span>Erstellt am</span>
-              <strong>{{ formatDate(request.createdAt) }}</strong>
-            </div>
-            @if (request.expiresAt) {
-              <div class="meta-item">
-                <span>Läuft ab am</span>
-                <strong>{{ formatDate(request.expiresAt) }}</strong>
+          <div class="detail-content">
+            @if (request.knowledgeLevel || request.gender || request.age) {
+              <div class="profile-meta">
+                @if (request.knowledgeLevel) {
+                  <div class="meta-badge">
+                    <span>Kenntnisstand</span>
+                    <strong>{{ request.knowledgeLevel }}</strong>
+                  </div>
+                }
+                @if (request.gender) {
+                  <div class="meta-badge">
+                    <span>Geschlecht</span>
+                    <strong>{{ request.gender }}</strong>
+                  </div>
+                }
+                @if (request.age) {
+                  <div class="meta-badge">
+                    <span>Alter</span>
+                    <strong>{{ request.age }}</strong>
+                  </div>
+                }
               </div>
             }
-          </div>
-        </div>
 
-        <div class="detail-actions">
-          <p-button
-            label="Zurück zur Übersicht"
-            icon="pi pi-arrow-left"
-            severity="secondary"
-            routerLink="/"
-          />
-          @if (request.editToken === token) {
+            <p class="description">{{ request.description }}</p>
+
+
+            <div class="detail-meta">
+              <div class="meta-item">
+                <span>Erstellt am</span>
+                <strong>{{ formatDate(request.createdAt) }}</strong>
+              </div>
+              @if (request.expiresAt) {
+                <div class="meta-item">
+                  <span>Läuft ab am</span>
+                  <strong>{{ formatDate(request.expiresAt) }}</strong>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="detail-actions">
             <p-button
-              label="Bearbeiten"
-              icon="pi pi-pencil"
-              [routerLink]="['/edit', request.editToken]"
+              label="Zurück zur Übersicht"
+              icon="pi pi-arrow-left"
+              severity="secondary"
+              routerLink="/"
             />
-            <p-button
-              label="Löschen"
-              icon="pi pi-trash"
-              severity="danger"
-              [routerLink]="['/delete', request.deleteToken]"
-            />
-          }
-        </div>
-      </p-card>
+          </div>
+        </p-card>
+
+        <p-card>
+          <div class="reply-header">
+            <h2>Auf diese Anzeige antworten</h2>
+            <p>Ihre Nachricht wird an den Ersteller der Anzeige gesendet.</p>
+          </div>
+
+          <form [formGroup]="replyForm" (ngSubmit)="onReplySubmit()" class="reply-form">
+            <div class="form-group">
+              <label for="name">Name: *</label>
+              <input
+                id="name"
+                type="text"
+                pInputText
+                formControlName="name"
+                [class.ng-invalid]="replyForm.get('name')?.invalid && replyForm.get('name')?.touched"
+              />
+              @if (replyForm.get('name')?.invalid && replyForm.get('name')?.touched) {
+                <small class="error-text">Bitte geben Sie Ihren Namen ein.</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="email">E-Mail: *</label>
+              <input
+                id="email"
+                type="email"
+                pInputText
+                formControlName="email"
+                [class.ng-invalid]="replyForm.get('email')?.invalid && replyForm.get('email')?.touched"
+              />
+              @if (replyForm.get('email')?.invalid && replyForm.get('email')?.touched) {
+                <small class="error-text">Bitte geben Sie eine gueltige E-Mail-Adresse ein.</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="message">Nachricht: *</label>
+              <textarea
+                id="message"
+                pTextarea
+                rows="6"
+                formControlName="message"
+                [class.ng-invalid]="replyForm.get('message')?.invalid && replyForm.get('message')?.touched"
+              ></textarea>
+              @if (replyForm.get('message')?.invalid && replyForm.get('message')?.touched) {
+                <small class="error-text">Bitte schreiben Sie mindestens 10 Zeichen.</small>
+              }
+            </div>
+
+            @if (replyError) {
+              <p-message severity="error" [text]="replyError" />
+            }
+
+            @if (replySuccess) {
+              <p-message severity="success" [text]="replySuccess" />
+            }
+
+            <div class="reply-actions">
+              <p-button
+                type="submit"
+                label="Nachricht senden"
+                icon="pi pi-send"
+                [loading]="replyLoading"
+                [disabled]="replyLoading || replyForm.invalid"
+              />
+            </div>
+          </form>
+        </p-card>
+      </div>
     }
   </div>
 </div>
-

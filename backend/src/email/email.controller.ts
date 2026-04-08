@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { EmailService } from './email.service';
 import {
   RequestCreatedEmailData,
@@ -24,7 +24,8 @@ export class EmailController {
 
     const testData: RequestCreatedEmailData = {
       requestTitle: 'Test-Anfrage',
-      sportart: 'Fußball',
+      sportart: 'Fussball',
+      frontendUrl: 'http://localhost:4200',
       editUrl: 'http://localhost:4200/edit/test-token-123',
       deleteUrl: 'http://localhost:4200/delete/test-token-123',
     };
@@ -86,7 +87,7 @@ export class EmailController {
   }
 
   /**
-   * Versendet Email bei gelöschter Anfrage
+   * Versendet Email bei geloeschter Anfrage
    * POST /email/request-deleted
    */
   @Post('request-deleted')
@@ -108,4 +109,3 @@ export class EmailController {
     };
   }
 }
-

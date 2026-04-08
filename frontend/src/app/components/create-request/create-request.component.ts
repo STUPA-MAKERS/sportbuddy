@@ -35,6 +35,16 @@ export class CreateRequestComponent implements OnInit {
   
   form!: FormGroup;
   sports: { label: string; value: string }[] = [];
+  knowledgeLevels = [
+    { label: 'Anfänger', value: 'Anfänger' },
+    { label: 'Fortgeschritten', value: 'Fortgeschritten' },
+    { label: 'Profi', value: 'Profi' },
+  ];
+  genderOptions = [
+    { label: 'Männlich', value: 'Männlich' },
+    { label: 'Weiblich', value: 'Weiblich' },
+    { label: 'Divers', value: 'Divers' },
+  ];
   loading = false;
   error: string | null = null;
 
@@ -44,6 +54,9 @@ export class CreateRequestComponent implements OnInit {
       sport: ['', [Validators.required]],
       description: ['', [Validators.required, Validators.minLength(10)]],
       contactEmail: ['', [Validators.required, Validators.email]],
+      knowledgeLevel: [null],
+      gender: [null],
+      age: [null, [Validators.min(1), Validators.max(120)]],
     });
 
     this.loadSports();
@@ -69,10 +82,15 @@ export class CreateRequestComponent implements OnInit {
     this.loading = true;
     this.error = null;
 
-    this.requestService.create(this.form.value).subscribe({
+    const payload = {
+      ...this.form.value,
+      age: this.form.value.age ? Number(this.form.value.age) : null,
+    };
+
+    this.requestService.create(payload).subscribe({
       next: (request) => {
         this.loading = false;
-        this.router.navigate(['/request', request.editToken]);
+        this.router.navigate(['/request', request.id]);
       },
       error: (err) => {
         this.error = 'Fehler beim Erstellen der Anfrage. Bitte versuchen Sie es erneut.';

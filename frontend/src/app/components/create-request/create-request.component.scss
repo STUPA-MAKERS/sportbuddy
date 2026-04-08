@@ -66,6 +66,16 @@
   }
 }
 
+.optional-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.optional-group {
+  margin-bottom: 1rem;
+}
+
 .error-message {
   background-color: #fee;
   color: #c33;
@@ -82,6 +92,10 @@
 }
 
 @media (max-width: 768px) {
+  .optional-grid {
+    grid-template-columns: 1fr;
+  }
+
   .form-actions {
     flex-direction: column;
     
