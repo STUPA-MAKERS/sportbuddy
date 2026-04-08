@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  BadRequestException,
   NotFoundException,
   Param,
   Post,
@@ -117,6 +118,10 @@ export class RequestsController {
     const request = await this.service.findPublicById(id);
     if (!request) {
       throw new NotFoundException('Anfrage nicht gefunden.');
+    }
+
+    if (body.securityAnswer !== body.securityLeft + body.securityRight) {
+      throw new BadRequestException('Die Sicherheitsfrage wurde falsch beantwortet.');
     }
 
     await this.emailService.sendRequestReplyEmail(request.contactEmail, {

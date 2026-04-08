@@ -36,6 +36,9 @@ export interface CreateReplyDto {
   name: string;
   email: string;
   message: string;
+  securityAnswer: number;
+  securityLeft: number;
+  securityRight: number;
 }
 
 @Injectable({

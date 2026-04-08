@@ -96,6 +96,22 @@
   margin-top: 2rem;
 }
 
+.danger-zone {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--stupa-gray-light);
+
+  h2 {
+    margin-bottom: 0.5rem;
+    color: #b42318;
+    font-size: 1.1rem;
+  }
+
+  p {
+    margin-bottom: 1rem;
+  }
+}
+
 @media (max-width: 768px) {
   .optional-grid {
     grid-template-columns: 1fr;

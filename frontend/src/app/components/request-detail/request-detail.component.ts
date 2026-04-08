@@ -40,13 +40,17 @@ export class RequestDetailComponent implements OnInit {
   replyLoading = false;
   replyError: string | null = null;
   replySuccess: string | null = null;
+  securityLeft = 0;
+  securityRight = 0;
 
   ngOnInit() {
     this.requestId = this.route.snapshot.paramMap.get('id') || '';
+    this.generateSecurityQuestion();
     this.replyForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(120)]],
       email: ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
       message: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(5000)]],
+      securityAnswer: ['', [Validators.required]],
     });
     this.loadRequest();
   }
@@ -72,22 +76,41 @@ export class RequestDetailComponent implements OnInit {
       return;
     }
 
+    const securityAnswer = Number(this.replyForm.value.securityAnswer);
+    if (securityAnswer !== this.securityLeft + this.securityRight) {
+      this.replyForm.get('securityAnswer')?.setErrors({ incorrect: true });
+      this.replyForm.get('securityAnswer')?.markAsTouched();
+      return;
+    }
+
     this.replyLoading = true;
     this.replyError = null;
     this.replySuccess = null;
 
-    this.requestService.reply(this.request.id, this.replyForm.getRawValue()).subscribe({
+    this.requestService.reply(this.request.id, {
+      ...this.replyForm.getRawValue(),
+      securityAnswer,
+      securityLeft: this.securityLeft,
+      securityRight: this.securityRight,
+    }).subscribe({
       next: () => {
         this.replyLoading = false;
         this.replySuccess = 'Ihre Nachricht wurde per E-Mail an den Ersteller gesendet.';
         this.replyForm.reset();
+        this.generateSecurityQuestion();
       },
       error: (err) => {
         this.replyLoading = false;
         this.replyError = 'Die Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.';
+        this.generateSecurityQuestion();
         console.error('Fehler:', err);
       },
     });
+  }
+
+  private generateSecurityQuestion() {
+    this.securityLeft = Math.floor(Math.random() * 8) + 1;
+    this.securityRight = Math.floor(Math.random() * 8) + 1;
   }
 
   formatDate(date: Date | string): string {
