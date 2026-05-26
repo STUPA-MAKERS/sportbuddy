@@ -32,11 +32,15 @@ export class RequestEntity {
   @Column({ length: 128 })
   deleteToken: string;
 
+  @Index({ unique: true })
+  @Column({ length: 128, nullable: true })
+  verifyToken: string | null;
+
   @Index()
   @Column({ length: 200 })
   contactEmail: string;
 
-  @Column({ default: true })
+  @Column({ default: false })
   active: boolean;
 
   @CreateDateColumn()

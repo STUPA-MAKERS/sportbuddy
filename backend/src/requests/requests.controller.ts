@@ -68,6 +68,7 @@ export class RequestsController {
     const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
     const editToken = generateToken();
     const deleteToken = generateToken();
+    const verifyToken = generateToken();
 
     const request = await this.service.create({
       title: body.title,
@@ -79,7 +80,8 @@ export class RequestsController {
       age: body.age ?? null,
       editToken,
       deleteToken,
-      active: true,
+      verifyToken,
+      active: false,
       expiresAt,
     });
 
@@ -88,6 +90,7 @@ export class RequestsController {
       requestTitle: body.title,
       sportart: body.sport,
       frontendUrl,
+      verifyUrl: `${frontendUrl}/verify/${verifyToken}`,
       editUrl: `${frontendUrl}/edit/${editToken}`,
       deleteUrl: `${frontendUrl}/delete/${deleteToken}`,
     });
@@ -122,6 +125,18 @@ export class RequestsController {
       throw new NotFoundException('Anfrage nicht gefunden.');
     }
     return this.toPublicResponse(request);
+  }
+
+  @Get('verify/:token')
+  async verifyEmail(@Param('token') token: string) {
+    if (!token || token.length < 10) {
+      throw new BadRequestException('Ungültiger Verifikationstoken.');
+    }
+    const request = await this.service.activateByVerifyToken(token);
+    if (!request) {
+      throw new NotFoundException('Verifikationslink ungültig oder bereits verwendet.');
+    }
+    return { success: true, requestId: request.id };
   }
 
   @Get(':id')

@@ -5,6 +5,17 @@
       <p>Erstelle eine neue Sportpartner-Anfrage</p>
     </div>
 
+    @if (pendingVerification) {
+      <p-card>
+        <div style="text-align: center; padding: 2rem;">
+          <h2>Fast fertig!</h2>
+          <p>Wir haben dir eine E-Mail geschickt. Bitte klick auf den Bestätigungslink, damit deine Anfrage öffentlich sichtbar wird.</p>
+          <p-button label="Zurück zur Startseite" icon="pi pi-home" routerLink="/" />
+        </div>
+      </p-card>
+    }
+
+    @if (!pendingVerification) {
     <p-card>
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="form-group">
@@ -99,7 +110,7 @@
             pTextarea
             formControlName="description"
             rows="5"
-            placeholder="Beschreiben Sie, was Sie suchen..."
+            placeholder="Beschreibe, was du suchst..."
             [class.ng-invalid]="
               form.get('description')?.invalid && form.get('description')?.touched
             "
@@ -161,5 +172,6 @@
         </div>
       </form>
     </p-card>
+    }
   </div>
 </div>

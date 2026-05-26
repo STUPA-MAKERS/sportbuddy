@@ -16,6 +16,7 @@ export interface RequestCreatedEmailData {
   requestTitle: string;
   sportart: string;
   frontendUrl: string;
+  verifyUrl: string;
   editUrl: string;
   deleteUrl: string;
 }
@@ -105,7 +106,7 @@ export class EmailService {
     const html = this.renderTemplate('request-created', data);
     return this.sendEmail({
       to,
-      subject: `Sportpartnerörse: Ihre Anfrage "${data.requestTitle}" wurde erstellt`,
+      subject: `Sportpartnerbörse: E-Mail-Adresse für "${data.requestTitle}" bestätigen`,
       html,
     });
   }
@@ -117,7 +118,7 @@ export class EmailService {
     const html = this.renderTemplate('request-updated', data);
     return this.sendEmail({
       to,
-      subject: `Sportpartnerörse: Ihre Anfrage "${data.requestTitle}" wurde aktualisiert`,
+      subject: `Sportpartnerbörse: Deine Anfrage "${data.requestTitle}" wurde aktualisiert`,
       html,
     });
   }
@@ -129,7 +130,7 @@ export class EmailService {
     const html = this.renderTemplate('request-deleted', { requestTitle });
     return this.sendEmail({
       to,
-      subject: `Sportpartnerörse: Ihre Anfrage "${requestTitle}" wurde gelöscht`,
+      subject: `Sportpartnerbörse: Deine Anfrage "${requestTitle}" wurde gelöscht`,
       html,
     });
   }
@@ -141,10 +142,10 @@ export class EmailService {
     const html = this.renderTemplate('request-reply', data);
     return this.sendEmail({
       to,
-      subject: `Sportpartnerörse: Neue Antwort auf "${data.requestTitle}"`,
+      subject: `Sportpartnerbörse: Neue Antwort auf "${data.requestTitle}"`,
       html,
       text: [
-        `Neue Antwort auf Ihre Anzeige "${data.requestTitle}" (${data.requestSport})`,
+        `Neue Antwort auf deine Anzeige "${data.requestTitle}" (${data.requestSport})`,
         `Name: ${data.senderName}`,
         `E-Mail: ${data.senderEmail}`,
         '',
@@ -160,7 +161,7 @@ export class EmailService {
     const html = this.renderTemplate('expiration-reminder', data);
     return this.sendEmail({
       to,
-      subject: `Sportpartnerörse: Ihre Anfrage läuft in ${data.daysLeft} Tagen ab`,
+      subject: `Sportpartnerbörse: Deine Anfrage läuft in ${data.daysLeft} Tagen ab`,
       html,
     });
   }
@@ -221,15 +222,16 @@ export class EmailService {
         return `
           <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-              <h2>Ihre Anfrage wurde erstellt</h2>
+              <h2>E-Mail-Adresse bestätigen</h2>
               <p>Hallo${data.recipientName ? ' ' + e(data.recipientName) : ''},</p>
-              <p>Ihre Anfrage <strong>${e(data.requestTitle)}</strong> (${e(data.sportart)}) wurde erfolgreich erstellt.</p>
-              <p>Du kannst deine Anfrage bearbeiten oder löschen über die folgenden Links:</p>
+              <p>Deine Anfrage <strong>${e(data.requestTitle)}</strong> (${e(data.sportart)}) wurde erstellt und wartet auf Bestätigung.</p>
+              <p><a href="${e(data.verifyUrl)}" style="background:#3498db;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;">E-Mail bestätigen</a></p>
+              <p>Erst nach der Bestätigung ist deine Anfrage öffentlich sichtbar.</p>
+              <p>Du kannst deine Anfrage außerdem bearbeiten oder löschen:</p>
               <ul>
                 <li><a href="${e(data.editUrl)}">Anfrage bearbeiten</a></li>
                 <li><a href="${e(data.deleteUrl)}">Anfrage löschen</a></li>
               </ul>
-              <p>Bitte bewahre diese Email auf, um später auf deine Anfrage zugreifen zu können.</p>
               <hr>
               <p style="font-size: 12px; color: #666;">Hochschule Reutlingen - Sportpartnerbörse</p>
             </body>
@@ -239,9 +241,9 @@ export class EmailService {
         return `
           <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-              <h2>Ihre Anfrage wurde aktualisiert</h2>
+              <h2>Deine Anfrage wurde aktualisiert</h2>
               <p>Hallo${data.recipientName ? ' ' + e(data.recipientName) : ''},</p>
-              <p>Ihre Anfrage <strong>${e(data.requestTitle)}</strong> wurde erfolgreich aktualisiert.</p>
+              <p>Deine Anfrage <strong>${e(data.requestTitle)}</strong> wurde erfolgreich aktualisiert.</p>
               <p>Du kannst deine Anfrage weiterhin bearbeiten oder löschen:</p>
               <ul>
                 <li><a href="${e(data.editUrl)}">Anfrage bearbeiten</a></li>
@@ -256,8 +258,8 @@ export class EmailService {
         return `
           <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-              <h2>Ihre Anfrage wurde gelöscht</h2>
-              <p>Ihre Anfrage <strong>${e(data.requestTitle)}</strong> wurde erfolgreich gelöscht.</p>
+              <h2>Deine Anfrage wurde gelöscht</h2>
+              <p>Deine Anfrage <strong>${e(data.requestTitle)}</strong> wurde erfolgreich gelöscht.</p>
               <hr>
               <p style="font-size: 12px; color: #666;">Hochschule Reutlingen - Sportpartnerbörse</p>
             </body>
@@ -267,7 +269,7 @@ export class EmailService {
         return `
           <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-              <h2>Neue Antwort auf Ihre Anzeige</h2>
+              <h2>Neue Antwort auf deine Anzeige</h2>
               <p>Es gibt eine neue Antwort auf <strong>${e(data.requestTitle)}</strong> (${e(data.requestSport)}).</p>
               <p><strong>Name:</strong> ${e(data.senderName)}</p>
               <p><strong>E-Mail:</strong> ${e(data.senderEmail)}</p>

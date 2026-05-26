@@ -22,6 +22,10 @@ export const routes: Routes = [
     loadComponent: () => import('./components/delete-request/delete-request.component').then(m => m.DeleteRequestComponent)
   },
   {
+    path: 'verify/:token',
+    loadComponent: () => import('./components/verify-request/verify-request.component').then(m => m.VerifyRequestComponent)
+  },
+  {
     path: '**',
     redirectTo: ''
   }

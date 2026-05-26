@@ -73,7 +73,7 @@
         <p-card>
           <div class="reply-header">
             <h2>Auf diese Anzeige antworten</h2>
-            <p>Ihre Nachricht wird an den Ersteller der Anzeige gesendet.</p>
+            <p>Deine Nachricht wird an den Ersteller der Anzeige gesendet.</p>
           </div>
 
           <form [formGroup]="replyForm" (ngSubmit)="onReplySubmit()" class="reply-form">
@@ -87,7 +87,7 @@
                 [class.ng-invalid]="replyForm.get('name')?.invalid && replyForm.get('name')?.touched"
               />
               @if (replyForm.get('name')?.invalid && replyForm.get('name')?.touched) {
-                <small class="error-text">Bitte geben Sie Ihren Namen ein.</small>
+                <small class="error-text">Bitte gib deinen Namen ein.</small>
               }
             </div>
 
@@ -101,7 +101,7 @@
                 [class.ng-invalid]="replyForm.get('email')?.invalid && replyForm.get('email')?.touched"
               />
               @if (replyForm.get('email')?.invalid && replyForm.get('email')?.touched) {
-                <small class="error-text">Bitte geben Sie eine gueltige E-Mail-Adresse ein.</small>
+                <small class="error-text">Bitte gib eine gültige E-Mail-Adresse ein.</small>
               }
             </div>
 
@@ -115,7 +115,7 @@
                 [class.ng-invalid]="replyForm.get('message')?.invalid && replyForm.get('message')?.touched"
               ></textarea>
               @if (replyForm.get('message')?.invalid && replyForm.get('message')?.touched) {
-                <small class="error-text">Bitte schreiben Sie mindestens 10 Zeichen.</small>
+                <small class="error-text">Bitte schreibe mindestens 10 Zeichen.</small>
               }
             </div>
 
@@ -125,7 +125,7 @@
                 (statechange)="onAltchaStateChange($event)"
               ></altcha-widget>
               @if (replyForm.get('altchaPayload')?.invalid && replyForm.get('altchaPayload')?.touched) {
-                <small class="error-text">Bitte bestätigen Sie, dass Sie kein Bot sind.</small>
+                <small class="error-text">Bitte bestätige, dass du kein Bot bist.</small>
               }
             </div>
 

@@ -41,6 +41,14 @@ export class RequestsService {
     return this.repo.findOne({ where: { deleteToken: token } });
   }
 
+  async activateByVerifyToken(token: string) {
+    const entity = await this.repo.findOne({ where: { verifyToken: token } });
+    if (!entity) return null;
+    entity.active = true;
+    entity.verifyToken = null;
+    return this.repo.save(entity);
+  }
+
   async updateByEditToken(token: string, updates: Partial<RequestEntity>) {
     const entity = await this.repo.findOne({ where: { editToken: token } });
     if (!entity) return null;

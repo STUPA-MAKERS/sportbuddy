@@ -3,23 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anfrage erstellt - Sportpartnerbörse</title>
+    <title>E-Mail bestätigen - Sportpartnerbörse</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
 
     <p>Hallo{{#if recipientName}} {{recipientName}}{{/if}},</p>
 
-    <p>Ihre Anfrage <strong>{{requestTitle}}</strong> für die Sportart <strong>{{sportart}}</strong> wurde erfolgreich erstellt und ist jetzt in der Sportpartnerbörse sichtbar.</p>
+    <p>Deine Anfrage <strong>{{requestTitle}}</strong> für die Sportart <strong>{{sportart}}</strong> wurde erstellt und wartet auf die Bestätigung deiner E-Mail-Adresse.</p>
 
     <div style="background-color: #e8f4f8; padding: 15px; border-left: 4px solid #3498db; margin: 20px 0;">
-        <p style="margin: 0;"><strong>Wichtig:</strong> Bitte bewahre diese Email auf, um später auf deine Anfrage zugreifen zu können.</p>
+        <p style="margin: 0;"><strong>Wichtig:</strong> Deine Anfrage ist erst nach der Bestätigung öffentlich sichtbar.</p>
     </div>
 
-    <p>Du kannst deine Anfrage jederzeit bearbeiten oder löschen:</p>
+    <p style="text-align: center; margin: 30px 0;">
+        <a href="{{verifyUrl}}" style="background-color: #3498db; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">E-Mail-Adresse bestätigen</a>
+    </p>
+
+    <p>Außerdem kannst du deine Anfrage jederzeit bearbeiten oder löschen:</p>
     <ul>
-        <li style="margin: 10px 0;"><a href="{{editUrl}}" style="color: #3498db; text-decoration: none;">📝 Anfrage bearbeiten</a></li>
-        <li style="margin: 10px 0;"><a href="{{deleteUrl}}" style="color: #e74c3c; text-decoration: none;">🗑️ Anfrage löschen</a></li>
+        <li style="margin: 10px 0;"><a href="{{editUrl}}" style="color: #3498db; text-decoration: none;">Anfrage bearbeiten</a></li>
+        <li style="margin: 10px 0;"><a href="{{deleteUrl}}" style="color: #e74c3c; text-decoration: none;">Anfrage löschen</a></li>
     </ul>
+
+    <p>Bitte bewahre diese E-Mail auf, um später auf deine Anfrage zugreifen zu können.</p>
 
     <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
 

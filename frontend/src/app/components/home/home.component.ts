@@ -61,7 +61,7 @@ export class HomeComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.error = 'Fehler beim Laden der Anfragen. Bitte versuchen Sie es später erneut.';
+        this.error = 'Fehler beim Laden der Anfragen. Bitte versuche es später erneut.';
         this.loading = false;
         console.error('Fehler:', err);
       }

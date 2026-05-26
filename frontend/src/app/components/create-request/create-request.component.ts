@@ -3,7 +3,7 @@ import 'altcha';
 import { CommonModule } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, inject } from '@angular/core';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
@@ -33,10 +33,10 @@ import { RequestService } from '../../services/request.service';
 })
 export class CreateRequestComponent implements OnInit {
   private requestService = inject(RequestService);
-  private router = inject(Router);
   private fb = inject(FormBuilder);
 
   form!: FormGroup;
+  pendingVerification = false;
   sports: { label: string; value: string }[] = [];
   knowledgeLevels = [
     { label: 'Anfänger', value: 'Anfänger' },
@@ -101,12 +101,12 @@ export class CreateRequestComponent implements OnInit {
     };
 
     this.requestService.create(payload).subscribe({
-      next: (request) => {
+      next: () => {
         this.loading = false;
-        this.router.navigate(['/request', request.id]);
+        this.pendingVerification = true;
       },
       error: (err) => {
-        this.error = 'Fehler beim Erstellen der Anfrage. Bitte versuchen Sie es erneut.';
+        this.error = 'Fehler beim Erstellen der Anfrage. Bitte versuche es erneut.';
         this.loading = false;
         console.error('Fehler:', err);
       },

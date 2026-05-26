@@ -93,12 +93,12 @@ export class RequestDetailComponent implements OnInit {
     this.requestService.reply(this.request.id, this.replyForm.getRawValue()).subscribe({
       next: () => {
         this.replyLoading = false;
-        this.replySuccess = 'Ihre Nachricht wurde per E-Mail an den Ersteller gesendet.';
+        this.replySuccess = 'Deine Nachricht wurde per E-Mail an den Ersteller gesendet.';
         this.replyForm.reset();
       },
       error: (err) => {
         this.replyLoading = false;
-        this.replyError = 'Die Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.';
+        this.replyError = 'Die Nachricht konnte nicht gesendet werden. Bitte versuche es erneut.';
         console.error('Fehler:', err);
       },
     });

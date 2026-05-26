@@ -85,6 +85,10 @@ export class RequestService {
     return this.http.delete<{ success: boolean }>(`${this.apiUrl}/requests/manage/${token}`);
   }
 
+  verify(token: string): Observable<{ success: boolean; requestId: string }> {
+    return this.http.get<{ success: boolean; requestId: string }>(`${this.apiUrl}/requests/verify/${token}`);
+  }
+
   getSports(): Observable<string[]> {
     return this.http.get<string[]>(`${this.apiUrl}/sports`);
   }

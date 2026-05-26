@@ -1,0 +1,29 @@
+<div class="verify-container">
+  <div class="container">
+    <p-card>
+      @if (loading) {
+        <p>Verifiziere E-Mail-Adresse...</p>
+      }
+
+      @if (!loading && requestId) {
+        <div style="text-align: center; padding: 1rem;">
+          <h2>E-Mail bestätigt!</h2>
+          <p>Deine Anfrage ist jetzt öffentlich sichtbar.</p>
+          <p-button
+            label="Zur Anfrage"
+            icon="pi pi-arrow-right"
+            [routerLink]="['/request', requestId]"
+          />
+        </div>
+      }
+
+      @if (!loading && error) {
+        <div style="text-align: center; padding: 1rem;">
+          <h2>Fehler</h2>
+          <p>{{ error }}</p>
+          <p-button label="Zur Startseite" icon="pi pi-home" routerLink="/" severity="secondary" />
+        </div>
+      }
+    </p-card>
+  </div>
+</div>
