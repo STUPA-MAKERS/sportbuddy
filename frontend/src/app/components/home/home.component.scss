@@ -170,8 +170,36 @@
 }
 
 @media (max-width: 768px) {
+  .home-container {
+    padding: 1rem 0;
+  }
+
+  .header-section {
+    margin-bottom: 1.5rem;
+
+    .subtitle {
+      font-size: 1rem;
+    }
+  }
+
   .requests-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .create-section {
+    margin-top: 1.5rem;
+
+    ::ng-deep .p-button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .empty-state ::ng-deep .p-button {
+    width: 100%;
+    justify-content: center;
+    margin-top: 1rem;
   }
 }
 

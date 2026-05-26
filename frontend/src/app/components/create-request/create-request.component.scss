@@ -98,9 +98,10 @@
 
   .form-actions {
     flex-direction: column;
-    
-    button {
+
+    ::ng-deep .p-button {
       width: 100%;
+      justify-content: center;
     }
   }
 }
