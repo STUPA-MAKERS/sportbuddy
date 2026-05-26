@@ -55,7 +55,9 @@ export class EmailService {
         pass: this.configService.get<string>('SMTP_PASS'),
       },
       tls: {
-        rejectUnauthorized: this.configService.get<string>('SMTP_TLS_REJECT_UNAUTHORIZED') !== 'false',
+        rejectUnauthorized:
+          this.configService.get<string>('SMTP_TLS_REJECT_UNAUTHORIZED') !==
+          'false',
       },
     };
 
@@ -83,15 +85,23 @@ export class EmailService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(`Email erfolgreich gesendet an ${options.to}: ${info.messageId}`);
+      this.logger.log(
+        `Email erfolgreich gesendet an ${options.to}: ${info.messageId}`,
+      );
       return true;
     } catch (error) {
-      this.logger.error(`Fehler beim Versenden der Email an ${options.to}:`, error);
+      this.logger.error(
+        `Fehler beim Versenden der Email an ${options.to}:`,
+        error,
+      );
       return false;
     }
   }
 
-  async sendRequestCreatedEmail(to: string, data: RequestCreatedEmailData): Promise<boolean> {
+  async sendRequestCreatedEmail(
+    to: string,
+    data: RequestCreatedEmailData,
+  ): Promise<boolean> {
     const html = this.renderTemplate('request-created', data);
     return this.sendEmail({
       to,
@@ -100,7 +110,10 @@ export class EmailService {
     });
   }
 
-  async sendRequestUpdatedEmail(to: string, data: RequestUpdatedEmailData): Promise<boolean> {
+  async sendRequestUpdatedEmail(
+    to: string,
+    data: RequestUpdatedEmailData,
+  ): Promise<boolean> {
     const html = this.renderTemplate('request-updated', data);
     return this.sendEmail({
       to,
@@ -109,7 +122,10 @@ export class EmailService {
     });
   }
 
-  async sendRequestDeletedEmail(to: string, requestTitle: string): Promise<boolean> {
+  async sendRequestDeletedEmail(
+    to: string,
+    requestTitle: string,
+  ): Promise<boolean> {
     const html = this.renderTemplate('request-deleted', { requestTitle });
     return this.sendEmail({
       to,
@@ -118,7 +134,10 @@ export class EmailService {
     });
   }
 
-  async sendRequestReplyEmail(to: string, data: RequestReplyEmailData): Promise<boolean> {
+  async sendRequestReplyEmail(
+    to: string,
+    data: RequestReplyEmailData,
+  ): Promise<boolean> {
     const html = this.renderTemplate('request-reply', data);
     return this.sendEmail({
       to,
@@ -148,11 +167,23 @@ export class EmailService {
 
   private renderTemplate(templateName: string, data: unknown): string {
     try {
-      const templatePath = path.join(__dirname, '..', '..', 'templates', 'emails', `${templateName}.hbs`);
+      const templatePath = path.join(
+        __dirname,
+        '..',
+        '..',
+        'templates',
+        'emails',
+        `${templateName}.hbs`,
+      );
 
       if (!fs.existsSync(templatePath)) {
-        this.logger.warn(`Template nicht gefunden: ${templatePath}, verwende Fallback`);
-        return this.getFallbackTemplate(templateName, data as Record<string, string>);
+        this.logger.warn(
+          `Template nicht gefunden: ${templatePath}, verwende Fallback`,
+        );
+        return this.getFallbackTemplate(
+          templateName,
+          data as Record<string, string>,
+        );
       }
 
       const templateContent = fs.readFileSync(templatePath, 'utf-8');
@@ -160,8 +191,14 @@ export class EmailService {
       const template = handlebars.compile(templateContent);
       return template(data);
     } catch (error) {
-      this.logger.error(`Fehler beim Rendern des Templates ${templateName}:`, error);
-      return this.getFallbackTemplate(templateName, data as Record<string, string>);
+      this.logger.error(
+        `Fehler beim Rendern des Templates ${templateName}:`,
+        error,
+      );
+      return this.getFallbackTemplate(
+        templateName,
+        data as Record<string, string>,
+      );
     }
   }
 
@@ -174,7 +211,10 @@ export class EmailService {
       .replace(/'/g, '&#39;');
   }
 
-  private getFallbackTemplate(templateName: string, data: Record<string, string>): string {
+  private getFallbackTemplate(
+    templateName: string,
+    data: Record<string, string>,
+  ): string {
     const e = (v: string) => this.escapeHtml(v ?? '');
     switch (templateName) {
       case 'request-created':
@@ -184,12 +224,12 @@ export class EmailService {
               <h2>Ihre Anfrage wurde erstellt</h2>
               <p>Hallo${data.recipientName ? ' ' + e(data.recipientName) : ''},</p>
               <p>Ihre Anfrage <strong>${e(data.requestTitle)}</strong> (${e(data.sportart)}) wurde erfolgreich erstellt.</p>
-              <p>Sie können Ihre Anfrage bearbeiten oder löschen über die folgenden Links:</p>
+              <p>Du kannst deine Anfrage bearbeiten oder löschen über die folgenden Links:</p>
               <ul>
                 <li><a href="${e(data.editUrl)}">Anfrage bearbeiten</a></li>
                 <li><a href="${e(data.deleteUrl)}">Anfrage löschen</a></li>
               </ul>
-              <p>Bitte bewahren Sie diese Email auf, um später auf Ihre Anfrage zugreifen zu können.</p>
+              <p>Bitte bewahre diese Email auf, um später auf deine Anfrage zugreifen zu können.</p>
               <hr>
               <p style="font-size: 12px; color: #666;">Hochschule Reutlingen - Sportpartnerbörse</p>
             </body>
@@ -202,7 +242,7 @@ export class EmailService {
               <h2>Ihre Anfrage wurde aktualisiert</h2>
               <p>Hallo${data.recipientName ? ' ' + e(data.recipientName) : ''},</p>
               <p>Ihre Anfrage <strong>${e(data.requestTitle)}</strong> wurde erfolgreich aktualisiert.</p>
-              <p>Sie können Ihre Anfrage weiterhin bearbeiten oder löschen:</p>
+              <p>Du kannst deine Anfrage weiterhin bearbeiten oder löschen:</p>
               <ul>
                 <li><a href="${e(data.editUrl)}">Anfrage bearbeiten</a></li>
                 <li><a href="${e(data.deleteUrl)}">Anfrage löschen</a></li>

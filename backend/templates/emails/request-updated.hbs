@@ -9,23 +9,22 @@
     <div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
         <h2 style="color: #2c3e50; margin-top: 0;">Ihre Anfrage wurde aktualisiert</h2>
     </div>
-    
+
     <p>Hallo{{#if recipientName}} {{recipientName}}{{/if}},</p>
-    
+
     <p>Ihre Anfrage <strong>{{requestTitle}}</strong> wurde erfolgreich aktualisiert.</p>
-    
-    <p>Sie können Ihre Anfrage jederzeit weiterhin bearbeiten oder löschen:</p>
+
+    <p>Du kannst deine Anfrage jederzeit bearbeiten oder löschen:</p>
     <ul>
         <li style="margin: 10px 0;"><a href="{{editUrl}}" style="color: #3498db; text-decoration: none;">📝 Anfrage bearbeiten</a></li>
         <li style="margin: 10px 0;"><a href="{{deleteUrl}}" style="color: #e74c3c; text-decoration: none;">🗑️ Anfrage löschen</a></li>
     </ul>
-    
+
     <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
-    
+
     <p style="font-size: 12px; color: #666; text-align: center;">
         Hochschule Reutlingen - Sportpartnerbörse<br>
         <a href="{{frontendUrl}}" style="color: #3498db;">Zur Sportpartnerbörse</a>
     </p>
 </body>
 </html>
-

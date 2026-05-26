@@ -46,9 +46,9 @@
               }
             </select>
             @if (form.get('sport')?.invalid && form.get('sport')?.touched) {
-              <small class="error">Bitte wählen Sie eine Sportart aus.</small>
+              <small class="error">Bitte wähle eine Sportart aus.</small>
             }
-            <small class="info">Bitte wählen Sie eine Sportart aus der Liste.</small>
+            <small class="info">Bitte wähle eine Sportart aus der Liste.</small>
           </div>
 
           <div class="form-group optional-group">
@@ -85,7 +85,9 @@
                 [class.ng-invalid]="form.get('age')?.invalid && form.get('age')?.touched"
               />
               @if (form.get('age')?.invalid && form.get('age')?.touched) {
-                <small class="error">Bitte geben Sie ein gültiges Alter zwischen 1 und 120 ein.</small>
+                <small class="error"
+                  >Bitte geben Sie ein gültiges Alter zwischen 1 und 120 ein.</small
+                >
               }
             </div>
           </div>
@@ -97,7 +99,9 @@
               pTextarea
               formControlName="description"
               rows="5"
-              [class.ng-invalid]="form.get('description')?.invalid && form.get('description')?.touched"
+              [class.ng-invalid]="
+                form.get('description')?.invalid && form.get('description')?.touched
+              "
             ></textarea>
             @if (form.get('description')?.invalid && form.get('description')?.touched) {
               <small class="error">Beschreibung ist erforderlich (min. 10 Zeichen)</small>

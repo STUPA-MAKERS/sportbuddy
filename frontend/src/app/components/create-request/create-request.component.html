@@ -38,9 +38,9 @@
             [class.ng-invalid]="form.get('sport')?.invalid && form.get('sport')?.touched"
           />
           @if (form.get('sport')?.invalid && form.get('sport')?.touched) {
-            <small class="error">Bitte wählen Sie eine Sportart aus.</small>
+            <small class="error">Bitte wähle eine Sportart aus.</small>
           }
-          <small class="info">Bitte wählen Sie eine Sportart aus der Liste.</small>
+          <small class="info">Bitte wähle eine Sportart aus der Liste.</small>
         </div>
 
         <div class="form-group optional-group">
@@ -87,7 +87,7 @@
               [class.ng-invalid]="form.get('age')?.invalid && form.get('age')?.touched"
             />
             @if (form.get('age')?.invalid && form.get('age')?.touched) {
-              <small class="error">Bitte geben Sie ein gueltiges Alter zwischen 1 und 120 ein.</small>
+              <small class="error">Bitte gib ein gültiges Alter zwischen 1 und 120 ein.</small>
             }
           </div>
         </div>
@@ -100,7 +100,9 @@
             formControlName="description"
             rows="5"
             placeholder="Beschreiben Sie, was Sie suchen..."
-            [class.ng-invalid]="form.get('description')?.invalid && form.get('description')?.touched"
+            [class.ng-invalid]="
+              form.get('description')?.invalid && form.get('description')?.touched
+            "
           ></textarea>
           @if (form.get('description')?.invalid && form.get('description')?.touched) {
             <small class="error">Beschreibung ist erforderlich (min. 10 Zeichen)</small>
@@ -115,21 +117,24 @@
             pInputText
             formControlName="contactEmail"
             placeholder="ihre.email@example.com"
-            [class.ng-invalid]="form.get('contactEmail')?.invalid && form.get('contactEmail')?.touched"
+            [class.ng-invalid]="
+              form.get('contactEmail')?.invalid && form.get('contactEmail')?.touched
+            "
           />
           @if (form.get('contactEmail')?.invalid && form.get('contactEmail')?.touched) {
             <small class="error">Gueltige E-Mail-Adresse ist erforderlich</small>
           }
-          <small class="info">Sie erhalten eine E-Mail mit Links zum Bearbeiten und Löschen.</small>
+          <small class="info">Du erhälst eine E-Mail mit Links zum Bearbeiten und Löschen.</small>
         </div>
 
         <div class="form-group">
           <altcha-widget
             challengeurl="/api/altcha/challenge"
+            verifyurl="/api/altcha/verify"
             (statechange)="onAltchaStateChange($event)"
           ></altcha-widget>
           @if (form.get('altchaPayload')?.invalid && form.get('altchaPayload')?.touched) {
-            <small class="error">Bitte bestätigen Sie, dass Sie kein Bot sind.</small>
+            <small class="error">Bitte bestätige, dass du kein Bot bist.</small>
           }
         </div>
 

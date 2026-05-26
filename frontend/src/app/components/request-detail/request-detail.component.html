@@ -122,6 +122,7 @@
             <div class="form-group">
               <altcha-widget
                 challengeurl="/api/altcha/challenge"
+                verifyurl="/api/altcha/verify"
                 (statechange)="onAltchaStateChange($event)"
               ></altcha-widget>
               @if (replyForm.get('altchaPayload')?.invalid && replyForm.get('altchaPayload')?.touched) {
