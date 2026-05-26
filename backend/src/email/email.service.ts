@@ -55,7 +55,7 @@ export class EmailService {
         pass: this.configService.get<string>('SMTP_PASS'),
       },
       tls: {
-        rejectUnauthorized: this.configService.get<string>('SMTP_TLS_REJECT_UNAUTHORIZED') === 'false',
+        rejectUnauthorized: this.configService.get<string>('SMTP_TLS_REJECT_UNAUTHORIZED') !== 'false',
       },
     };
 
@@ -165,19 +165,29 @@ export class EmailService {
     }
   }
 
+  private escapeHtml(str: string): string {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   private getFallbackTemplate(templateName: string, data: Record<string, string>): string {
+    const e = (v: string) => this.escapeHtml(v ?? '');
     switch (templateName) {
       case 'request-created':
         return `
           <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
               <h2>Ihre Anfrage wurde erstellt</h2>
-              <p>Hallo${data.recipientName ? ' ' + data.recipientName : ''},</p>
-              <p>Ihre Anfrage <strong>${data.requestTitle}</strong> (${data.sportart}) wurde erfolgreich erstellt.</p>
+              <p>Hallo${data.recipientName ? ' ' + e(data.recipientName) : ''},</p>
+              <p>Ihre Anfrage <strong>${e(data.requestTitle)}</strong> (${e(data.sportart)}) wurde erfolgreich erstellt.</p>
               <p>Sie können Ihre Anfrage bearbeiten oder löschen über die folgenden Links:</p>
               <ul>
-                <li><a href="${data.editUrl}">Anfrage bearbeiten</a></li>
-                <li><a href="${data.deleteUrl}">Anfrage löschen</a></li>
+                <li><a href="${e(data.editUrl)}">Anfrage bearbeiten</a></li>
+                <li><a href="${e(data.deleteUrl)}">Anfrage löschen</a></li>
               </ul>
               <p>Bitte bewahren Sie diese Email auf, um später auf Ihre Anfrage zugreifen zu können.</p>
               <hr>
@@ -190,12 +200,12 @@ export class EmailService {
           <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
               <h2>Ihre Anfrage wurde aktualisiert</h2>
-              <p>Hallo${data.recipientName ? ' ' + data.recipientName : ''},</p>
-              <p>Ihre Anfrage <strong>${data.requestTitle}</strong> wurde erfolgreich aktualisiert.</p>
+              <p>Hallo${data.recipientName ? ' ' + e(data.recipientName) : ''},</p>
+              <p>Ihre Anfrage <strong>${e(data.requestTitle)}</strong> wurde erfolgreich aktualisiert.</p>
               <p>Sie können Ihre Anfrage weiterhin bearbeiten oder löschen:</p>
               <ul>
-                <li><a href="${data.editUrl}">Anfrage bearbeiten</a></li>
-                <li><a href="${data.deleteUrl}">Anfrage löschen</a></li>
+                <li><a href="${e(data.editUrl)}">Anfrage bearbeiten</a></li>
+                <li><a href="${e(data.deleteUrl)}">Anfrage löschen</a></li>
               </ul>
               <hr>
               <p style="font-size: 12px; color: #666;">Hochschule Reutlingen - Sportpartnerbörse</p>
@@ -207,7 +217,7 @@ export class EmailService {
           <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
               <h2>Ihre Anfrage wurde gelöscht</h2>
-              <p>Ihre Anfrage <strong>${data.requestTitle}</strong> wurde erfolgreich gelöscht.</p>
+              <p>Ihre Anfrage <strong>${e(data.requestTitle)}</strong> wurde erfolgreich gelöscht.</p>
               <hr>
               <p style="font-size: 12px; color: #666;">Hochschule Reutlingen - Sportpartnerbörse</p>
             </body>
@@ -218,18 +228,18 @@ export class EmailService {
           <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
               <h2>Neue Antwort auf Ihre Anzeige</h2>
-              <p>Es gibt eine neue Antwort auf <strong>${data.requestTitle}</strong> (${data.requestSport}).</p>
-              <p><strong>Name:</strong> ${data.senderName}</p>
-              <p><strong>E-Mail:</strong> ${data.senderEmail}</p>
+              <p>Es gibt eine neue Antwort auf <strong>${e(data.requestTitle)}</strong> (${e(data.requestSport)}).</p>
+              <p><strong>Name:</strong> ${e(data.senderName)}</p>
+              <p><strong>E-Mail:</strong> ${e(data.senderEmail)}</p>
               <p><strong>Nachricht:</strong></p>
-              <p style="white-space: pre-wrap;">${data.message}</p>
+              <p style="white-space: pre-wrap;">${e(data.message)}</p>
               <hr>
               <p style="font-size: 12px; color: #666;">Hochschule Reutlingen - Sportpartnerbörse</p>
             </body>
           </html>
         `;
       default:
-        return `<p>${JSON.stringify(data)}</p>`;
+        return `<p>${e(JSON.stringify(data))}</p>`;
     }
   }
 

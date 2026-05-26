@@ -30,15 +30,14 @@ export interface CreateRequestDto {
   knowledgeLevel?: string | null;
   gender?: string | null;
   age?: number | null;
+  altchaPayload: string;
 }
 
 export interface CreateReplyDto {
   name: string;
   email: string;
   message: string;
-  securityAnswer: number;
-  securityLeft: number;
-  securityRight: number;
+  altchaPayload: string;
 }
 
 @Injectable({
@@ -46,7 +45,7 @@ export interface CreateReplyDto {
 })
 export class RequestService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = '/api';
 
   getAll(sport?: string, skip: number = 0, take: number = 20): Observable<PublicRequest[]> {
     let params = new HttpParams().set('skip', skip.toString()).set('take', take.toString());

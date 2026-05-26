@@ -1,5 +1,7 @@
+import 'altcha';
+
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -13,6 +15,7 @@ import { PublicRequest, RequestService } from '../../services/request.service';
 @Component({
   selector: 'app-request-detail',
   standalone: true,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
     CommonModule,
     CardModule,
@@ -40,17 +43,14 @@ export class RequestDetailComponent implements OnInit {
   replyLoading = false;
   replyError: string | null = null;
   replySuccess: string | null = null;
-  securityLeft = 0;
-  securityRight = 0;
 
   ngOnInit() {
     this.requestId = this.route.snapshot.paramMap.get('id') || '';
-    this.generateSecurityQuestion();
     this.replyForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(120)]],
       email: ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
       message: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(5000)]],
-      securityAnswer: ['', [Validators.required]],
+      altchaPayload: ['', Validators.required],
     });
     this.loadRequest();
   }
@@ -70,16 +70,18 @@ export class RequestDetailComponent implements OnInit {
     });
   }
 
+  onAltchaStateChange(event: Event) {
+    const detail = (event as CustomEvent<{ state: string; payload?: string }>).detail;
+    if (detail.state === 'verified' && detail.payload) {
+      this.replyForm.get('altchaPayload')?.setValue(detail.payload);
+    } else {
+      this.replyForm.get('altchaPayload')?.setValue('');
+    }
+  }
+
   onReplySubmit() {
     if (this.replyForm.invalid || !this.request) {
       this.replyForm.markAllAsTouched();
-      return;
-    }
-
-    const securityAnswer = Number(this.replyForm.value.securityAnswer);
-    if (securityAnswer !== this.securityLeft + this.securityRight) {
-      this.replyForm.get('securityAnswer')?.setErrors({ incorrect: true });
-      this.replyForm.get('securityAnswer')?.markAsTouched();
       return;
     }
 
@@ -87,30 +89,18 @@ export class RequestDetailComponent implements OnInit {
     this.replyError = null;
     this.replySuccess = null;
 
-    this.requestService.reply(this.request.id, {
-      ...this.replyForm.getRawValue(),
-      securityAnswer,
-      securityLeft: this.securityLeft,
-      securityRight: this.securityRight,
-    }).subscribe({
+    this.requestService.reply(this.request.id, this.replyForm.getRawValue()).subscribe({
       next: () => {
         this.replyLoading = false;
         this.replySuccess = 'Ihre Nachricht wurde per E-Mail an den Ersteller gesendet.';
         this.replyForm.reset();
-        this.generateSecurityQuestion();
       },
       error: (err) => {
         this.replyLoading = false;
         this.replyError = 'Die Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.';
-        this.generateSecurityQuestion();
         console.error('Fehler:', err);
       },
     });
-  }
-
-  private generateSecurityQuestion() {
-    this.securityLeft = Math.floor(Math.random() * 8) + 1;
-    this.securityRight = Math.floor(Math.random() * 8) + 1;
   }
 
   formatDate(date: Date | string): string {

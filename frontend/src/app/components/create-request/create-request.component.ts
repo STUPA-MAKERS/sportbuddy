@@ -1,18 +1,21 @@
-import { Component, OnInit, inject } from '@angular/core';
+import 'altcha';
+
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, inject } from '@angular/core';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { CardModule } from 'primeng/card';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
+import { TextareaModule } from 'primeng/textarea';
 import { RequestService } from '../../services/request.service';
 
 @Component({
   selector: 'app-create-request',
   standalone: true,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   imports: [
     CommonModule,
     RouterLink,
@@ -26,13 +29,13 @@ import { RequestService } from '../../services/request.service';
     SelectModule,
   ],
   templateUrl: './create-request.component.html',
-  styleUrl: './create-request.component.scss'
+  styleUrl: './create-request.component.scss',
 })
 export class CreateRequestComponent implements OnInit {
   private requestService = inject(RequestService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
-  
+
   form!: FormGroup;
   sports: { label: string; value: string }[] = [];
   knowledgeLevels = [
@@ -59,6 +62,7 @@ export class CreateRequestComponent implements OnInit {
       knowledgeLevel: [null],
       gender: [null],
       age: [null, [Validators.min(1), Validators.max(120)]],
+      altchaPayload: ['', Validators.required],
     });
 
     this.loadSports();
@@ -67,12 +71,21 @@ export class CreateRequestComponent implements OnInit {
   loadSports() {
     this.requestService.getSports().subscribe({
       next: (sports) => {
-        this.sports = sports.map(sport => ({ label: sport, value: sport }));
+        this.sports = sports.map((sport) => ({ label: sport, value: sport }));
       },
       error: (err) => {
         console.error('Fehler beim Laden der Sportarten:', err);
-      }
+      },
     });
+  }
+
+  onAltchaStateChange(event: Event) {
+    const detail = (event as CustomEvent<{ state: string; payload?: string }>).detail;
+    if (detail.state === 'verified' && detail.payload) {
+      this.form.get('altchaPayload')?.setValue(detail.payload);
+    } else {
+      this.form.get('altchaPayload')?.setValue('');
+    }
   }
 
   onSubmit() {
@@ -98,8 +111,7 @@ export class CreateRequestComponent implements OnInit {
         this.error = 'Fehler beim Erstellen der Anfrage. Bitte versuchen Sie es erneut.';
         this.loading = false;
         console.error('Fehler:', err);
-      }
+      },
     });
   }
 }
-

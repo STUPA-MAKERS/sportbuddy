@@ -8,20 +8,13 @@ export class CleanupService {
 
 	constructor(private readonly requestsService: RequestsService) {}
 
-	/**
-	 * Läuft täglich um 2:00 Uhr morgens
-	 * Löscht alle Anfragen, die älter als 90 Tage sind (expiresAt)
-	 */
 	@Cron(CronExpression.EVERY_DAY_AT_2AM)
 	async handleCleanup() {
-		this.logger.log('Starte automatische Bereinigung abgeläfener Anfragen...');
-		
 		try {
 			const deletedCount = await this.requestsService.cleanupExpiredRequests();
-			this.logger.log(`✅ Bereinigung abgeschlossen: ${deletedCount} Anfrage(n) gelöscht`);
+			this.logger.log(`Bereinigung: ${deletedCount} abgelaufene Anfrage(n) gelöscht`);
 		} catch (error) {
-			this.logger.error('❌ Fehler bei der automatischen Bereinigung:', error);
+			this.logger.error('Fehler bei der automatischen Bereinigung:', error);
 		}
 	}
 }
-

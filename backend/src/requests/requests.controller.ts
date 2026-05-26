@@ -1,9 +1,10 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
-  BadRequestException,
+  InternalServerErrorException,
   NotFoundException,
   Param,
   Post,
@@ -11,6 +12,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { verifySolution } from 'altcha-lib';
 import * as crypto from 'crypto';
 import { EmailService } from '../email/email.service';
 import { CreateReplyDto } from './dto/create-reply.dto';
@@ -49,8 +51,19 @@ export class RequestsController {
     private readonly configService: ConfigService,
   ) {}
 
+  private getAltchaKey(): string {
+    const key = this.configService.get<string>('ALTCHA_HMAC_KEY');
+    if (!key) throw new InternalServerErrorException('ALTCHA_HMAC_KEY not configured');
+    return key;
+  }
+
   @Post()
   async create(@Body() body: CreateRequestDto): Promise<PublicRequestResponse> {
+    const valid = await verifySolution(body.altchaPayload, this.getAltchaKey());
+    if (!valid) {
+      throw new BadRequestException('Altcha-Verifizierung fehlgeschlagen.');
+    }
+
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
     const editToken = generateToken();
@@ -84,22 +97,21 @@ export class RequestsController {
 
   @Get()
   async list(@Query('sport') sport?: string, @Query('skip') skip?: string, @Query('take') take?: string) {
-    const requests = await this.service.findAll({
-      sport,
-      skip: skip ? parseInt(skip, 10) : 0,
-      take: take ? parseInt(take, 10) : 20,
-    });
+    const rawTake = take ? parseInt(take, 10) : 20;
+    const rawSkip = skip ? parseInt(skip, 10) : 0;
+    const resolvedTake = Number.isFinite(rawTake) ? Math.min(Math.max(rawTake, 1), 100) : 20;
+    const resolvedSkip = Number.isFinite(rawSkip) ? Math.max(rawSkip, 0) : 0;
 
+    const requests = await this.service.findAll({ sport, skip: resolvedSkip, take: resolvedTake });
     return requests.map((request) => this.toPublicResponse(request));
   }
 
   @Get('manage/:token')
   async getByToken(@Param('token') token: string): Promise<ManagedRequestResponse> {
-    const request = await this.service.findByToken(token);
+    const request = await this.service.findByEditToken(token);
     if (!request) {
       throw new NotFoundException('Anfrage nicht gefunden.');
     }
-
     return this.toManagedResponse(request);
   }
 
@@ -109,7 +121,6 @@ export class RequestsController {
     if (!request) {
       throw new NotFoundException('Anfrage nicht gefunden.');
     }
-
     return this.toPublicResponse(request);
   }
 
@@ -120,8 +131,9 @@ export class RequestsController {
       throw new NotFoundException('Anfrage nicht gefunden.');
     }
 
-    if (body.securityAnswer !== body.securityLeft + body.securityRight) {
-      throw new BadRequestException('Die Sicherheitsfrage wurde falsch beantwortet.');
+    const valid = await verifySolution(body.altchaPayload, this.getAltchaKey());
+    if (!valid) {
+      throw new BadRequestException('Altcha-Verifizierung fehlgeschlagen.');
     }
 
     await this.emailService.sendRequestReplyEmail(request.contactEmail, {
@@ -158,7 +170,7 @@ export class RequestsController {
 
   @Delete('manage/:token')
   async deleteByDeleteToken(@Param('token') token: string) {
-    const request = await this.service.findByToken(token);
+    const request = await this.service.findByDeleteToken(token);
     const success = await this.service.deleteByDeleteToken(token);
 
     if (success && request) {

@@ -123,6 +123,16 @@
           <small class="info">Sie erhalten eine E-Mail mit Links zum Bearbeiten und Löschen.</small>
         </div>
 
+        <div class="form-group">
+          <altcha-widget
+            challengeurl="/api/altcha/challenge"
+            (statechange)="onAltchaStateChange($event)"
+          ></altcha-widget>
+          @if (form.get('altchaPayload')?.invalid && form.get('altchaPayload')?.touched) {
+            <small class="error">Bitte bestätigen Sie, dass Sie kein Bot sind.</small>
+          }
+        </div>
+
         @if (error) {
           <div class="error-message">
             <p>{{ error }}</p>

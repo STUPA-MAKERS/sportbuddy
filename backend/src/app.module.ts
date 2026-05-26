@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AltchaModule } from './altcha/altcha.module';
 import { EmailModule } from './email/email.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RequestsModule } from './requests/requests.module';
@@ -28,6 +29,7 @@ import { CleanupService } from './cleanup/cleanup.service';
         synchronize: true, // TODO: use false in production
       }),
     }),
+    AltchaModule,
     EmailModule,
     RequestsModule,
   ],
