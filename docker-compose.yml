@@ -15,14 +15,6 @@ services:
       retries: 10
     restart: unless-stopped
 
-  altcha:
-    image: ghcr.io/altcha-org/altcha-srv:latest
-    container_name: spb_altcha
-    environment:
-      ALTCHA_HMAC_KEY: ${ALTCHA_HMAC_KEY}
-      ALTCHA_MAX_NUMBER: "200000"
-    restart: unless-stopped
-
   backend:
     build:
       context: ./backend
@@ -44,14 +36,11 @@ services:
       SMTP_TLS_REJECT_UNAUTHORIZED: ${SMTP_TLS_REJECT_UNAUTHORIZED:-true}
       API_SECRET: ${API_SECRET}
       ALTCHA_HMAC_KEY: ${ALTCHA_HMAC_KEY}
-      ALTCHA_API_URL: http://altcha:8080
     ports:
       - "8093:3000"
     depends_on:
       postgres:
         condition: service_healthy
-      altcha:
-        condition: service_started
     restart: unless-stopped
 
   frontend:
