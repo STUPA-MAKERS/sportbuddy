@@ -30,15 +30,14 @@ export interface CreateRequestDto {
   knowledgeLevel?: string | null;
   gender?: string | null;
   age?: number | null;
+  altchaPayload: string;
 }
 
 export interface CreateReplyDto {
   name: string;
   email: string;
   message: string;
-  securityAnswer: number;
-  securityLeft: number;
-  securityRight: number;
+  altchaPayload: string;
 }
 
 @Injectable({

@@ -120,19 +120,12 @@
             </div>
 
             <div class="form-group">
-              <label for="securityAnswer">Sicherheitsfrage: Was ist {{ securityLeft }} + {{ securityRight }}? *</label>
-              <input
-                id="securityAnswer"
-                type="number"
-                pInputText
-                formControlName="securityAnswer"
-                [class.ng-invalid]="replyForm.get('securityAnswer')?.invalid && replyForm.get('securityAnswer')?.touched"
-              />
-              @if (replyForm.get('securityAnswer')?.hasError('required') && replyForm.get('securityAnswer')?.touched) {
-                <small class="error-text">Bitte beantworten Sie die Sicherheitsfrage.</small>
-              }
-              @if (replyForm.get('securityAnswer')?.hasError('incorrect') && replyForm.get('securityAnswer')?.touched) {
-                <small class="error-text">Die Antwort auf die Sicherheitsfrage ist nicht korrekt.</small>
+              <altcha-widget
+                challengeurl="/api/altcha/challenge"
+                (statechange)="onAltchaStateChange($event)"
+              ></altcha-widget>
+              @if (replyForm.get('altchaPayload')?.invalid && replyForm.get('altchaPayload')?.touched) {
+                <small class="error-text">Bitte bestätigen Sie, dass Sie kein Bot sind.</small>
               }
             </div>
 

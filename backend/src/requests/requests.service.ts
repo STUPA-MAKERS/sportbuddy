@@ -33,10 +33,12 @@ export class RequestsService {
     });
   }
 
-  async findByToken(token: string) {
-    return this.repo.findOne({
-      where: [{ editToken: token }, { deleteToken: token }],
-    });
+  async findByEditToken(token: string) {
+    return this.repo.findOne({ where: { editToken: token } });
+  }
+
+  async findByDeleteToken(token: string) {
+    return this.repo.findOne({ where: { deleteToken: token } });
   }
 
   async updateByEditToken(token: string, updates: Partial<RequestEntity>) {

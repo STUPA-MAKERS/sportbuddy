@@ -12,6 +12,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { GENDER_OPTIONS, KNOWLEDGE_LEVELS } from '../request-options.constants';
+import { PREDEFINED_SPORTS } from '../sports.constants';
 
 export class CreateRequestDto {
   @IsString()
@@ -21,17 +22,22 @@ export class CreateRequestDto {
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(80)
+  @IsIn(PREDEFINED_SPORTS)
   sport: string;
 
   @IsString()
   @IsNotEmpty()
   @MinLength(10)
+  @MaxLength(5000)
   description: string;
 
   @IsEmail()
   @MaxLength(200)
   contactEmail: string;
+
+  @IsString()
+  @IsNotEmpty()
+  altchaPayload: string;
 
   @IsOptional()
   @IsString()

@@ -1,3 +1,8 @@
 *.pdf
 
 *.todo.md
+
+spb_pg_data/
+
+.env
+backend/.env

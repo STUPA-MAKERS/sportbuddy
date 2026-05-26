@@ -1,4 +1,4 @@
-import { IsEmail, IsInt, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateReplyDto {
   @IsString()
@@ -16,12 +16,7 @@ export class CreateReplyDto {
   @MaxLength(5000)
   message: string;
 
-  @IsInt()
-  securityAnswer: number;
-
-  @IsInt()
-  securityLeft: number;
-
-  @IsInt()
-  securityRight: number;
+  @IsString()
+  @IsNotEmpty()
+  altchaPayload: string;
 }

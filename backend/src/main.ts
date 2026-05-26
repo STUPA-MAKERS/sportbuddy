@@ -26,17 +26,14 @@ async function bootstrap() {
     }),
   );
 
-  const corsOrigins = getCorsOrigins();
-  if (corsOrigins.length > 0) {
-    app.enableCors({
-      origin: corsOrigins,
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-      credentials: true,
-    });
-  }
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:4200',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
 
   const port = process.env.PORT || 3000;
-  await app.listen(port, '0.0.0.0');
-  console.log(`Backend listening on port ${port}`);
+  await app.listen(port);
+  console.log(`Backend läuft auf http://localhost:${port}`);
 }
 bootstrap();
