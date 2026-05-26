@@ -14,7 +14,7 @@ export class CleanupService {
 	 */
 	@Cron(CronExpression.EVERY_DAY_AT_2AM)
 	async handleCleanup() {
-		this.logger.log('Starte automatische Bereinigung abgelaufener Anfragen...');
+		this.logger.log('Starte automatische Bereinigung abgeläfener Anfragen...');
 		
 		try {
 			const deletedCount = await this.requestsService.cleanupExpiredRequests();

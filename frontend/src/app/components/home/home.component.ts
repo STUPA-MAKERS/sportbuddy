@@ -7,7 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
-import { RequestService, Request } from '../../services/request.service';
+import { PublicRequest, RequestService } from '../../services/request.service';
 
 @Component({
   selector: 'app-home',
@@ -28,7 +28,7 @@ import { RequestService, Request } from '../../services/request.service';
 export class HomeComponent implements OnInit {
   private requestService = inject(RequestService);
   
-  requests: Request[] = [];
+  requests: PublicRequest[] = [];
   sports: string[] = [];
   selectedSport: string | null = null;
   loading = false;

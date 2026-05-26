@@ -34,23 +34,60 @@
 
           <div class="form-group">
             <label for="sport">Sportart *</label>
-            <p-select
+            <select
               id="sport"
+              class="native-select"
               formControlName="sport"
-              [options]="sports"
-              optionLabel="label"
-              optionValue="value"
-              [editable]="true"
-              [filter]="true"
-              placeholder="Sportart auswählen oder eingeben"
-              [showClear]="true"
-              styleClass="w-full"
               [class.ng-invalid]="form.get('sport')?.invalid && form.get('sport')?.touched"
-            />
+            >
+              <option value="">Sportart auswählen</option>
+              @for (sport of sports; track sport.value) {
+                <option [value]="sport.value">{{ sport.label }}</option>
+              }
+            </select>
             @if (form.get('sport')?.invalid && form.get('sport')?.touched) {
-              <small class="error">Bitte geben Sie eine Sportart ein</small>
+              <small class="error">Bitte wählen Sie eine Sportart aus.</small>
             }
-            <small class="info">Sie können eine vorhandene Sportart auswählen oder eine neue eingeben</small>
+            <small class="info">Bitte wählen Sie eine Sportart aus der Liste.</small>
+          </div>
+
+          <div class="form-group optional-group">
+            <label for="knowledgeLevel">Kenntnisstand</label>
+            <select id="knowledgeLevel" class="native-select" formControlName="knowledgeLevel">
+              <option [ngValue]="null">Optional auswählen</option>
+              @for (level of knowledgeLevels; track level.value) {
+                <option [value]="level.value">{{ level.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="optional-grid">
+            <div class="form-group optional-group">
+              <label for="gender">Geschlecht</label>
+              <select id="gender" class="native-select" formControlName="gender">
+                <option [ngValue]="null">Optional auswählen</option>
+                @for (option of genderOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group optional-group">
+              <label for="age">Alter</label>
+              <input
+                id="age"
+                type="number"
+                min="1"
+                max="120"
+                pInputText
+                formControlName="age"
+                placeholder="Optional"
+                [class.ng-invalid]="form.get('age')?.invalid && form.get('age')?.touched"
+              />
+              @if (form.get('age')?.invalid && form.get('age')?.touched) {
+                <small class="error">Bitte geben Sie ein gültiges Alter zwischen 1 und 120 ein.</small>
+              }
+            </div>
           </div>
 
           <div class="form-group">
@@ -78,7 +115,7 @@
               label="Abbrechen"
               icon="pi pi-times"
               severity="secondary"
-              [routerLink]="['/request', request.editToken]"
+              [routerLink]="['/request', request.id]"
               [disabled]="loading"
             />
             <p-button
@@ -89,9 +126,20 @@
               [disabled]="form.invalid || loading"
             />
           </div>
+
+          <div class="danger-zone">
+            <h2>Anzeige löschen</h2>
+            <p>Falls Sie die Anzeige dauerhaft entfernen möchten, können Sie sie hier löschen.</p>
+            <p-button
+              label="Anzeige löschen"
+              icon="pi pi-trash"
+              severity="danger"
+              [routerLink]="['/delete', request.deleteToken]"
+              [disabled]="loading"
+            />
+          </div>
         </form>
       </p-card>
     }
   </div>
 </div>
-

@@ -82,9 +82,11 @@ templates/
 - `GET /api/requests` - Alle Anfragen abrufen
 - `GET /api/requests/:id` - Einzelne Anfrage abrufen
 - `POST /api/requests` - Neue Anfrage erstellen
-- `PATCH /api/requests/:token` - Anfrage bearbeiten (Token-basiert)
-- `DELETE /api/requests/:token` - Anfrage löschen (Token-basiert)
-- `GET /api/requests/sports/list` - Liste aller Sportarten
+- `POST /api/requests/:id/replies` - Antwort auf eine Anzeige per E-Mail senden
+- `GET /api/requests/manage/:token` - Private Anzeige per Token laden
+- `PUT /api/requests/manage/:token` - Anfrage bearbeiten (Token-basiert)
+- `DELETE /api/requests/manage/:token` - Anfrage löschen (Token-basiert)
+- `GET /api/sports` - Liste aller Sportarten
 
 ### E-Mail (Test)
 

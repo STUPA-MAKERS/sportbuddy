@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
-import { RequestService, Request } from '../../services/request.service';
+import { ManagedRequest, RequestService } from '../../services/request.service';
 
 @Component({
   selector: 'app-delete-request',
@@ -17,7 +17,7 @@ export class DeleteRequestComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   
-  request: Request | null = null;
+  request: ManagedRequest | null = null;
   loading = false;
   deleting = false;
   error: string | null = null;

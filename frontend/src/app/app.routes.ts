@@ -10,7 +10,7 @@ export const routes: Routes = [
     loadComponent: () => import('./components/create-request/create-request.component').then(m => m.CreateRequestComponent)
   },
   {
-    path: 'request/:token',
+    path: 'request/:id',
     loadComponent: () => import('./components/request-detail/request-detail.component').then(m => m.RequestDetailComponent)
   },
   {

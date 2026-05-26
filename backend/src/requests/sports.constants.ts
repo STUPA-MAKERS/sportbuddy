@@ -1,0 +1,17 @@
+export const PREDEFINED_SPORTS = [
+  'STUPA Events',
+  'Wintersport',
+  'Badminton',
+  'Basketball',
+  'Fussball',
+  'Joggen',
+  'Klettern',
+  'Radfahren',
+  'Schwimmen',
+  'Tanzen',
+  'Tennis',
+  'Tischtennis',
+  'Volleyball',
+  'Wandern',
+  'Sonstige Sportarten',
+] as const;

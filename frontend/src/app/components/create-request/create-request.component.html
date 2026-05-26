@@ -30,17 +30,66 @@
             [options]="sports"
             optionLabel="label"
             optionValue="value"
-            [editable]="true"
+            [editable]="false"
             [filter]="true"
-            placeholder="Sportart auswählen oder eingeben"
+            placeholder="Sportart auswählen"
             [showClear]="true"
             styleClass="w-full"
             [class.ng-invalid]="form.get('sport')?.invalid && form.get('sport')?.touched"
           />
           @if (form.get('sport')?.invalid && form.get('sport')?.touched) {
-            <small class="error">Bitte geben Sie eine Sportart ein</small>
+            <small class="error">Bitte wählen Sie eine Sportart aus.</small>
           }
-          <small class="info">Sie können eine vorhandene Sportart auswählen oder eine Neue eingeben</small>
+          <small class="info">Bitte wählen Sie eine Sportart aus der Liste.</small>
+        </div>
+
+        <div class="form-group optional-group">
+          <label for="knowledgeLevel">Kenntnisstand</label>
+          <p-select
+            id="knowledgeLevel"
+            formControlName="knowledgeLevel"
+            [options]="knowledgeLevels"
+            optionLabel="label"
+            optionValue="value"
+            [editable]="false"
+            placeholder="Optional auswählen"
+            [showClear]="true"
+            styleClass="w-full"
+          />
+        </div>
+
+        <div class="optional-grid">
+          <div class="form-group optional-group">
+            <label for="gender">Geschlecht</label>
+            <p-select
+              id="gender"
+              formControlName="gender"
+              [options]="genderOptions"
+              optionLabel="label"
+              optionValue="value"
+              [editable]="false"
+              placeholder="Optional auswählen"
+              [showClear]="true"
+              styleClass="w-full"
+            />
+          </div>
+
+          <div class="form-group optional-group">
+            <label for="age">Alter</label>
+            <input
+              id="age"
+              type="number"
+              min="1"
+              max="120"
+              pInputText
+              formControlName="age"
+              placeholder="Optional"
+              [class.ng-invalid]="form.get('age')?.invalid && form.get('age')?.touched"
+            />
+            @if (form.get('age')?.invalid && form.get('age')?.touched) {
+              <small class="error">Bitte geben Sie ein gueltiges Alter zwischen 1 und 120 ein.</small>
+            }
+          </div>
         </div>
 
         <div class="form-group">
@@ -69,9 +118,9 @@
             [class.ng-invalid]="form.get('contactEmail')?.invalid && form.get('contactEmail')?.touched"
           />
           @if (form.get('contactEmail')?.invalid && form.get('contactEmail')?.touched) {
-            <small class="error">Gültige E-Mail-Adresse ist erforderlich</small>
+            <small class="error">Gueltige E-Mail-Adresse ist erforderlich</small>
           }
-          <small class="info">Sie erhalten eine E-Mail mit Links zum Bearbeiten und Löschen</small>
+          <small class="info">Sie erhalten eine E-Mail mit Links zum Bearbeiten und Löschen.</small>
         </div>
 
         @if (error) {
@@ -100,4 +149,3 @@
     </p-card>
   </div>
 </div>
-
