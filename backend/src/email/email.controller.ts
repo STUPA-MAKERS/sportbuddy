@@ -10,37 +10,6 @@ export class EmailController {
   constructor(private readonly emailService: EmailService) {}
 
   /**
-   * Test-Endpoint zum Versenden einer Test-Email
-   * GET /email/test?to=test@example.com
-   */
-  @Get('test')
-  async testEmail(@Query('to') to: string) {
-    if (!to) {
-      return {
-        success: false,
-        message: 'Parameter "to" (Email-Adresse) ist erforderlich',
-      };
-    }
-
-    const testData: RequestCreatedEmailData = {
-      requestTitle: 'Test-Anfrage',
-      sportart: 'Fussball',
-      frontendUrl: 'http://localhost:4200',
-      editUrl: 'http://localhost:4200/edit/test-token-123',
-      deleteUrl: 'http://localhost:4200/delete/test-token-123',
-    };
-
-    const success = await this.emailService.sendRequestCreatedEmail(to, testData);
-
-    return {
-      success,
-      message: success
-        ? `Test-Email erfolgreich an ${to} gesendet`
-        : `Fehler beim Versenden der Email an ${to}`,
-    };
-  }
-
-  /**
    * Versendet Email bei neuer Anfrage
    * POST /email/request-created
    */
