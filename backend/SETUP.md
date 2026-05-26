@@ -1,12 +1,12 @@
-# SMTP Email-Setup Anleitung
+# SMTP-E-Mail-Setup-Anleitung
 
 ## Was wurde erstellt?
 
-✅ Vollständiges NestJS Backend mit Email-Service
+✅ Vollständiges NestJS Backend mit E-Mail-Service
 ✅ SMTP-Integration mit Nodemailer
-✅ Email-Templates (Handlebars)
+✅ E-Mail-Templates (Handlebars)
 ✅ Docker-Support
-✅ Test-Endpoint für Email-Versand
+✅ Test-Endpoint für E-Mail-Versand
 
 ## Schnellstart
 
@@ -38,7 +38,9 @@ SMTP_FROM=noreply@sportpartnerboerse.de
 
 # Server-Konfiguration
 PORT=3000
-FRONTEND_URL=http://localhost:4200
+APP_URL=https://sportbuddy.example.com
+FRONTEND_URL=https://sportbuddy.example.com
+CORS_ORIGINS=https://sportbuddy.example.com
 ```
 
 ### 3. Server starten
@@ -47,18 +49,18 @@ FRONTEND_URL=http://localhost:4200
 npm run start:dev
 ```
 
-Der Server läuft jetzt auf `http://localhost:3000`
+Der Server läuft jetzt auf dem konfigurierten Port.
 
-### 4. Test-Email versenden
+### 4. Test-E-Mail versenden
 
 Öffnen Sie im Browser:
 ```
-http://localhost:3000/email/test?to=ihre-email@example.com
+https://sportbuddy.example.com/email/test?to=ihre-email@example.com
 ```
 
 Oder mit curl:
 ```bash
-curl "http://localhost:3000/email/test?to=ihre-email@example.com"
+curl "https://sportbuddy.example.com/email/test?to=ihre-email@example.com"
 ```
 
 ## SMTP-Konfiguration für gängige Anbieter
@@ -110,7 +112,7 @@ SMTP_FROM=ihre-email@outlook.com
 
 ### Mailtrap (für Entwicklungstests)
 
-[Mailtrap](https://mailtrap.io) ist perfekt zum Testen ohne echte Emails zu versenden:
+[Mailtrap](https://mailtrap.io) ist perfekt zum Testen ohne echte E-Mails zu versenden:
 
 ```env
 SMTP_HOST=smtp.mailtrap.io
@@ -121,30 +123,30 @@ SMTP_PASS=ihr-mailtrap-pass
 SMTP_FROM=test@mailtrap.io
 ```
 
-## Verfügbare Email-Funktionen
+## Verfügbare E-Mail-Funktionen
 
-### 1. Email bei neuer Anfrage
+### 1. E-Mail bei neuer Anfrage
 
 ```typescript
 await emailService.sendRequestCreatedEmail('user@example.com', {
   requestTitle: 'Fußballpartner gesucht',
   sportart: 'Fußball',
-  editUrl: 'http://localhost:4200/edit/token-123',
-  deleteUrl: 'http://localhost:4200/delete/token-123',
+  editUrl: 'https://sportbuddy.example.com/edit/token-123',
+  deleteUrl: 'https://sportbuddy.example.com/delete/token-123',
 });
 ```
 
-### 2. Email bei aktualisierter Anfrage
+### 2. E-Mail bei aktualisierter Anfrage
 
 ```typescript
 await emailService.sendRequestUpdatedEmail('user@example.com', {
   requestTitle: 'Fußballpartner gesucht',
-  editUrl: 'http://localhost:4200/edit/token-123',
-  deleteUrl: 'http://localhost:4200/delete/token-123',
+  editUrl: 'https://sportbuddy.example.com/edit/token-123',
+  deleteUrl: 'https://sportbuddy.example.com/delete/token-123',
 });
 ```
 
-### 3. Email bei gelöschter Anfrage
+### 3. E-Mail bei gelöschter Anfrage
 
 ```typescript
 await emailService.sendRequestDeletedEmail('user@example.com', 'Fußballpartner gesucht');
@@ -161,7 +163,7 @@ await emailService.sendRequestDeletedEmail('user@example.com', 'Fußballpartner 
 4. ✅ Firewall-Einstellungen prüfen
 5. ✅ SMTP_HOST und SMTP_PORT nochmals überprüfen
 
-### Problem: "Email kommt nicht an"
+### Problem: "E-Mail kommt nicht an"
 
 **Lösung:**
 1. ✅ Spam-Ordner prüfen
@@ -174,7 +176,7 @@ await emailService.sendRequestDeletedEmail('user@example.com', 'Fußballpartner 
 **Lösung:**
 1. ✅ Benutzername/Passwort nochmals prüfen
 2. ✅ Bei Gmail: App-Passwort verwenden (nicht normales Passwort!)
-3. ✅ SMTP_USER sollte die vollständige Email-Adresse sein
+3. ✅ SMTP_USER sollte die vollständige E-Mail-Adresse sein
 
 ## Logs und Debugging
 
@@ -182,13 +184,13 @@ Beim Start des Servers sehen Sie:
 - ✅ "SMTP-Verbindung erfolgreich verifiziert" = Alles OK
 - ❌ "SMTP-Verbindung fehlgeschlagen" = Problem mit Config
 
-Bei Email-Versand in den Logs:
-- ✅ "Email erfolgreich gesendet an..." = Erfolg
-- ❌ "Fehler beim Versenden der Email..." = Problem
+Bei E-Mail-Versand in den Logs:
+- ✅ "E-Mail erfolgreich gesendet an..." = Erfolg
+- ❌ "Fehler beim Versenden der E-Mail..." = Problem
 
 ## Nächste Schritte
 
-Nachdem der Email-Versand funktioniert:
+Nachdem der E-Mail-Versand funktioniert:
 
 1. ✅ Datenbank-Schema erstellen
 2. ✅ Request-Endpoints implementieren

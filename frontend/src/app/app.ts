@@ -11,4 +11,13 @@ import { CommonModule } from '@angular/common';
 export class App {
   title = 'Sportpartnerbörse - Hochschule Reutlingen';
   currentYear = new Date().getFullYear();
+  menuOpen = false;
+
+  toggleMenu() {
+    this.menuOpen = !this.menuOpen;
+  }
+
+  closeMenu() {
+    this.menuOpen = false;
+  }
 }

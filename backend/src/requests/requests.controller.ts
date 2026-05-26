@@ -70,13 +70,12 @@ export class RequestsController {
       expiresAt,
     });
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
     await this.emailService.sendRequestCreatedEmail(body.contactEmail, {
       requestTitle: body.title,
       sportart: body.sport,
-      frontendUrl,
-      editUrl: `${frontendUrl}/edit/${editToken}`,
-      deleteUrl: `${frontendUrl}/delete/${deleteToken}`,
+      frontendUrl: this.getFrontendUrl(),
+      editUrl: this.getFrontendPath(`/edit/${editToken}`),
+      deleteUrl: this.getFrontendPath(`/delete/${deleteToken}`),
     });
 
     return this.toPublicResponse(request);
@@ -145,12 +144,11 @@ export class RequestsController {
       throw new NotFoundException('Anfrage nicht gefunden.');
     }
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
     await this.emailService.sendRequestUpdatedEmail(request.contactEmail, {
       requestTitle: request.title,
-      frontendUrl,
-      editUrl: `${frontendUrl}/edit/${request.editToken}`,
-      deleteUrl: `${frontendUrl}/delete/${request.deleteToken}`,
+      frontendUrl: this.getFrontendUrl(),
+      editUrl: this.getFrontendPath(`/edit/${request.editToken}`),
+      deleteUrl: this.getFrontendPath(`/delete/${request.deleteToken}`),
     });
 
     return this.toManagedResponse(request);
@@ -182,6 +180,19 @@ export class RequestsController {
       updatedAt: request.updatedAt,
       expiresAt: request.expiresAt,
     };
+  }
+
+  private getFrontendUrl(): string {
+    return (
+      this.configService.get<string>('FRONTEND_URL') ||
+      this.configService.get<string>('APP_URL') ||
+      ''
+    ).replace(/\/+$/, '');
+  }
+
+  private getFrontendPath(path: string): string {
+    const frontendUrl = this.getFrontendUrl();
+    return frontendUrl ? `${frontendUrl}${path}` : path;
   }
 
   private toManagedResponse(request: RequestEntity): ManagedRequestResponse {

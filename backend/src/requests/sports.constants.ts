@@ -3,7 +3,7 @@ export const PREDEFINED_SPORTS = [
   'Wintersport',
   'Badminton',
   'Basketball',
-  'Fussball',
+  'Fußball',
   'Joggen',
   'Klettern',
   'Radfahren',

@@ -10,7 +10,7 @@ NestJS Backend für die Sportpartnerbörse Hochschule Reutlingen.
 docker compose up -d --build backend
 ```
 
-Backend läuft auf: http://localhost:3000
+Backend läuft auf dem in `BACKEND_PORT` gesetzten Port (Default: 3000).
 
 ### Lokale Entwicklung
 
@@ -33,7 +33,9 @@ DB_NAME=sportpartnerboerse
 
 # Server
 PORT=3000
-FRONTEND_URL=http://localhost:4200
+APP_URL=https://sportbuddy.example.com
+FRONTEND_URL=https://sportbuddy.example.com
+CORS_ORIGINS=https://sportbuddy.example.com
 
 # SMTP (E-Mail)
 SMTP_HOST=smtp.example.com

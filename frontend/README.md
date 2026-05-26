@@ -10,7 +10,7 @@ Angular 21 Frontend für die Sportpartnerbörse Hochschule Reutlingen.
 docker compose up -d --build frontend
 ```
 
-Frontend läuft auf: http://localhost:4200
+Frontend läuft auf dem in `FRONTEND_PORT` gesetzten Port (Default im Docker-Setup: Port 80).
 
 ### Lokale Entwicklung
 
@@ -67,7 +67,7 @@ npm run build
 
 ## 📝 Wichtige Hinweise
 
-- **API-URL**: Wird über `RequestService` konfiguriert (Standard: `http://localhost:3000/api`)
+- **API-URL**: Wird relativ über `/api` aufgerufen und im Docker-Setup von Nginx an das Backend weitergeleitet.
 - **Routing**: Alle Routen sind in `app.routes.ts` definiert
 - **PrimeNG Theme**: Aura Theme mit deaktiviertem Dark Mode
 - **Responsive**: Mobile-first Design

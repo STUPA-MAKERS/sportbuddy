@@ -119,7 +119,9 @@ STUPA/
 
    # Server
    PORT=3000
-   FRONTEND_URL=http://localhost:4200
+   APP_URL=https://sportbuddy.example.com
+   FRONTEND_URL=https://sportbuddy.example.com
+   CORS_ORIGINS=https://sportbuddy.example.com
 
    # SMTP (E-Mail)
    SMTP_HOST=smtp.example.com
@@ -138,8 +140,8 @@ STUPA/
 
 4. **Anwendung öffnen**
 
-   - Frontend: http://localhost:4200
-   - Backend API: http://localhost:3000
+   - Frontend: `https://sportbuddy.example.com`
+   - Backend API: `https://sportbuddy.example.com/api`
 
 ### Lokale Entwicklung (ohne Docker)
 
@@ -171,7 +173,9 @@ npm start
 | `DB_PASSWORD` | Datenbank-Passwort | `postgres` | ✅ |
 | `DB_NAME` | Datenbank-Name | `sportpartnerboerse` | ✅ |
 | `PORT` | Backend-Port | `3000` | ❌ (Default: 3000) |
-| `FRONTEND_URL` | Frontend-URL für CORS | `http://localhost:4200` | ✅ |
+| `APP_URL` | Öffentliche URL für E-Mail-Links | `https://sportbuddy.example.com` | ✅ |
+| `FRONTEND_URL` | Frontend-URL für CORS/E-Mail-Links | `https://sportbuddy.example.com` | ✅ |
+| `CORS_ORIGINS` | Erlaubte CORS-Origins, kommagetrennt | `https://sportbuddy.example.com` | ❌ |
 | `SMTP_HOST` | SMTP-Server | `smtp.example.com` | ✅ |
 | `SMTP_PORT` | SMTP-Port | `587` | ✅ |
 | `SMTP_SECURE` | SSL/TLS verwenden | `false` | ❌ (Default: false) |
@@ -415,13 +419,13 @@ server {
     server_name sportbuddy.hochschule-reutlingen.de;
 
     location / {
-        proxy_pass http://localhost:4200;
+        proxy_pass http://frontend:80;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
 
     location /api {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://backend:3000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
@@ -492,7 +496,7 @@ npm run start:dev  # Hot-Reload aktiviert
 ```bash
 cd frontend
 npm install
-npm start  # Läuft auf http://localhost:4200
+npm start
 ```
 
 ### Datenbank-Migrationen

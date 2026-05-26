@@ -19,7 +19,7 @@ import { CleanupService } from './cleanup/cleanup.service';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get<string>('DB_HOST', 'localhost'),
+        host: config.get<string>('DB_HOST', 'postgres'),
         port: Number(config.get<number>('DB_PORT', 5432)),
         username: config.get<string>('DB_USER', 'postgres'),
         password: config.get<string>('DB_PASSWORD', 'postgres'),

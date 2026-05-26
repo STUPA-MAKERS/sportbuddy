@@ -83,10 +83,10 @@ export class EmailService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(`Email erfolgreich gesendet an ${options.to}: ${info.messageId}`);
+      this.logger.log(`E-Mail erfolgreich gesendet an ${options.to}: ${info.messageId}`);
       return true;
     } catch (error) {
-      this.logger.error(`Fehler beim Versenden der Email an ${options.to}:`, error);
+      this.logger.error(`Fehler beim Versenden der E-Mail an ${options.to}:`, error);
       return false;
     }
   }
@@ -95,7 +95,7 @@ export class EmailService {
     const html = this.renderTemplate('request-created', data);
     return this.sendEmail({
       to,
-      subject: `Sportpartnerörse: Ihre Anfrage "${data.requestTitle}" wurde erstellt`,
+      subject: `Sportpartnerbörse: Ihre Anfrage "${data.requestTitle}" wurde erstellt`,
       html,
     });
   }
@@ -104,7 +104,7 @@ export class EmailService {
     const html = this.renderTemplate('request-updated', data);
     return this.sendEmail({
       to,
-      subject: `Sportpartnerörse: Ihre Anfrage "${data.requestTitle}" wurde aktualisiert`,
+      subject: `Sportpartnerbörse: Ihre Anfrage "${data.requestTitle}" wurde aktualisiert`,
       html,
     });
   }
@@ -113,7 +113,7 @@ export class EmailService {
     const html = this.renderTemplate('request-deleted', { requestTitle });
     return this.sendEmail({
       to,
-      subject: `Sportpartnerörse: Ihre Anfrage "${requestTitle}" wurde gelöscht`,
+      subject: `Sportpartnerbörse: Ihre Anfrage "${requestTitle}" wurde gelöscht`,
       html,
     });
   }
@@ -122,7 +122,7 @@ export class EmailService {
     const html = this.renderTemplate('request-reply', data);
     return this.sendEmail({
       to,
-      subject: `Sportpartnerörse: Neue Antwort auf "${data.requestTitle}"`,
+      subject: `Sportpartnerbörse: Neue Antwort auf "${data.requestTitle}"`,
       html,
       text: [
         `Neue Antwort auf Ihre Anzeige "${data.requestTitle}" (${data.requestSport})`,
@@ -141,7 +141,7 @@ export class EmailService {
     const html = this.renderTemplate('expiration-reminder', data);
     return this.sendEmail({
       to,
-      subject: `Sportpartnerörse: Ihre Anfrage läuft in ${data.daysLeft} Tagen ab`,
+      subject: `Sportpartnerbörse: Ihre Anfrage läuft in ${data.daysLeft} Tagen ab`,
       html,
     });
   }
@@ -179,7 +179,7 @@ export class EmailService {
                 <li><a href="${data.editUrl}">Anfrage bearbeiten</a></li>
                 <li><a href="${data.deleteUrl}">Anfrage löschen</a></li>
               </ul>
-              <p>Bitte bewahren Sie diese Email auf, um später auf Ihre Anfrage zugreifen zu können.</p>
+              <p>Bitte bewahren Sie diese E-Mail auf, um später auf Ihre Anfrage zugreifen zu können.</p>
               <hr>
               <p style="font-size: 12px; color: #666;">Hochschule Reutlingen - Sportpartnerbörse</p>
             </body>

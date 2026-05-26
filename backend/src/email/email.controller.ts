@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { EmailService } from './email.service';
 import {
   RequestCreatedEmailData,
@@ -7,10 +8,13 @@ import {
 
 @Controller('email')
 export class EmailController {
-  constructor(private readonly emailService: EmailService) {}
+  constructor(
+    private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
+  ) {}
 
   /**
-   * Test-Endpoint zum Versenden einer Test-Email
+   * Test-Endpoint zum Versenden einer Test-E-Mail
    * GET /email/test?to=test@example.com
    */
   @Get('test')
@@ -18,16 +22,16 @@ export class EmailController {
     if (!to) {
       return {
         success: false,
-        message: 'Parameter "to" (Email-Adresse) ist erforderlich',
+        message: 'Parameter "to" (E-Mail-Adresse) ist erforderlich',
       };
     }
 
     const testData: RequestCreatedEmailData = {
       requestTitle: 'Test-Anfrage',
-      sportart: 'Fussball',
-      frontendUrl: 'http://localhost:4200',
-      editUrl: 'http://localhost:4200/edit/test-token-123',
-      deleteUrl: 'http://localhost:4200/delete/test-token-123',
+      sportart: 'Fußball',
+      frontendUrl: this.getFrontendUrl(),
+      editUrl: this.getFrontendPath('/edit/test-token-123'),
+      deleteUrl: this.getFrontendPath('/delete/test-token-123'),
     };
 
     const success = await this.emailService.sendRequestCreatedEmail(to, testData);
@@ -35,13 +39,13 @@ export class EmailController {
     return {
       success,
       message: success
-        ? `Test-Email erfolgreich an ${to} gesendet`
-        : `Fehler beim Versenden der Email an ${to}`,
+        ? `Test-E-Mail erfolgreich an ${to} gesendet`
+        : `Fehler beim Versenden der E-Mail an ${to}`,
     };
   }
 
   /**
-   * Versendet Email bei neuer Anfrage
+   * Versendet E-Mail bei neuer Anfrage
    * POST /email/request-created
    */
   @Post('request-created')
@@ -59,12 +63,12 @@ export class EmailController {
 
     return {
       success,
-      message: success ? 'Email erfolgreich gesendet' : 'Fehler beim Versenden',
+      message: success ? 'E-Mail erfolgreich gesendet' : 'Fehler beim Versenden',
     };
   }
 
   /**
-   * Versendet Email bei aktualisierter Anfrage
+   * Versendet E-Mail bei aktualisierter Anfrage
    * POST /email/request-updated
    */
   @Post('request-updated')
@@ -82,12 +86,12 @@ export class EmailController {
 
     return {
       success,
-      message: success ? 'Email erfolgreich gesendet' : 'Fehler beim Versenden',
+      message: success ? 'E-Mail erfolgreich gesendet' : 'Fehler beim Versenden',
     };
   }
 
   /**
-   * Versendet Email bei geloeschter Anfrage
+   * Versendet E-Mail bei gelöschter Anfrage
    * POST /email/request-deleted
    */
   @Post('request-deleted')
@@ -105,7 +109,20 @@ export class EmailController {
 
     return {
       success,
-      message: success ? 'Email erfolgreich gesendet' : 'Fehler beim Versenden',
+      message: success ? 'E-Mail erfolgreich gesendet' : 'Fehler beim Versenden',
     };
+  }
+
+  private getFrontendUrl(): string {
+    return (
+      this.configService.get<string>('FRONTEND_URL') ||
+      this.configService.get<string>('APP_URL') ||
+      ''
+    ).replace(/\/+$/, '');
+  }
+
+  private getFrontendPath(path: string): string {
+    const frontendUrl = this.getFrontendUrl();
+    return frontendUrl ? `${frontendUrl}${path}` : path;
   }
 }
