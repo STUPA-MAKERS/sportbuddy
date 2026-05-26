@@ -6,10 +6,10 @@ services:
       POSTGRES_DB: sportpartnerboerse
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5433:5432"
+#    ports:
+#      - "5433:5432"
     volumes:
-      - spb_pg_data:/var/lib/postgresql/data
+      - ./spb_pg_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d sportpartnerboerse"]
       interval: 5s
@@ -24,7 +24,7 @@ services:
     env_file:
       - ./backend/.env
     ports:
-      - "3000:3000"
+      - "8093:3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,7 +41,7 @@ services:
       context: ./frontend
     container_name: spb_frontend
     ports:
-      - "4200:80"
+      - "8094:80"
     depends_on:
       - backend
     restart: unless-stopped
