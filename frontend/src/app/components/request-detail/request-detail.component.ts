@@ -11,6 +11,7 @@ import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
 import { PublicRequest, RequestService } from '../../services/request.service';
+import { formatDate } from '../../utils/format-date';
 
 @Component({
   selector: 'app-request-detail',
@@ -103,12 +104,5 @@ export class RequestDetailComponent implements OnInit {
     });
   }
 
-  formatDate(date: Date | string): string {
-    const d = new Date(date);
-    return d.toLocaleDateString('de-DE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }
+  formatDate = formatDate;
 }

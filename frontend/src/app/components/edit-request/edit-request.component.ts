@@ -1,12 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { CardModule } from 'primeng/card';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
-import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
+import { TextareaModule } from 'primeng/textarea';
 import { ManagedRequest, RequestService } from '../../services/request.service';
 
 @Component({
@@ -69,12 +69,6 @@ export class EditRequestComponent implements OnInit {
     this.loading = true;
     this.requestService.getByToken(this.token).subscribe({
       next: (request) => {
-        if (!request || request.editToken !== this.token) {
-          this.error = 'Anfrage nicht gefunden oder kein Bearbeitungsrecht.';
-          this.loading = false;
-          return;
-        }
-
         this.request = request;
         this.form.patchValue({
           title: request.title,
@@ -86,10 +80,9 @@ export class EditRequestComponent implements OnInit {
         });
         this.loading = false;
       },
-      error: (err) => {
-        this.error = 'Fehler beim Laden der Anfrage.';
+      error: () => {
+        this.error = 'Anfrage nicht gefunden oder kein Bearbeitungsrecht.';
         this.loading = false;
-        console.error('Fehler:', err);
       },
     });
   }
@@ -99,9 +92,7 @@ export class EditRequestComponent implements OnInit {
       next: (sports) => {
         this.sports = sports.map((sport) => ({ label: sport, value: sport }));
       },
-      error: (err) => {
-        console.error('Fehler beim Laden der Sportarten:', err);
-      },
+      error: (err) => console.error('Fehler beim Laden der Sportarten:', err),
     });
   }
 
@@ -124,10 +115,9 @@ export class EditRequestComponent implements OnInit {
         this.loading = false;
         this.router.navigate(['/request', request.id]);
       },
-      error: (err) => {
+      error: () => {
         this.error = 'Fehler beim Aktualisieren der Anfrage.';
         this.loading = false;
-        console.error('Fehler:', err);
       },
     });
   }

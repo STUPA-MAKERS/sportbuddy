@@ -8,6 +8,7 @@ import { SelectModule } from 'primeng/select';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { PublicRequest, RequestService } from '../../services/request.service';
+import { formatDate } from '../../utils/format-date';
 
 @Component({
   selector: 'app-home',
@@ -76,13 +77,6 @@ export class HomeComponent implements OnInit {
     this.loadRequests();
   }
 
-  formatDate(date: Date | string): string {
-    const d = new Date(date);
-    return d.toLocaleDateString('de-DE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  }
+  formatDate = formatDate;
 }
 

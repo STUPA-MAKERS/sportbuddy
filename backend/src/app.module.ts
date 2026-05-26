@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AltchaModule } from './altcha/altcha.module';
 import { EmailModule } from './email/email.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -34,7 +33,7 @@ import { CleanupService } from './cleanup/cleanup.service';
     RequestsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, CleanupService],
+  providers: [CleanupService],
 })
 export class AppModule {}
 

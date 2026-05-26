@@ -39,11 +39,9 @@ export class CreateRequestComponent implements OnInit {
   form!: FormGroup;
   sports: { label: string; value: string }[] = [];
   knowledgeLevels = [
-    { label: '1 - Anfänger*in', value: 'Anfänger*in' },
-    { label: '2 - Fortgeschrittene*r', value: 'Fortgeschrittene*r' },
-    { label: '3 - Erfahrene*r', value: 'Erfahrene*r' },
-    { label: '4 - Sehr erfahrene*r', value: 'Sehr erfahrene*r' },
-    { label: '5 - Expert*in', value: 'Expert*in' },
+    { label: 'Anfänger', value: 'Anfänger' },
+    { label: 'Fortgeschritten', value: 'Fortgeschritten' },
+    { label: 'Profi', value: 'Profi' },
   ];
   genderOptions = [
     { label: 'Männlich', value: 'Männlich' },

@@ -115,6 +115,15 @@ export class RequestsController {
     return this.toManagedResponse(request);
   }
 
+  @Get('delete-confirm/:token')
+  async getDeleteConfirm(@Param('token') token: string): Promise<PublicRequestResponse> {
+    const request = await this.service.findByDeleteToken(token);
+    if (!request) {
+      throw new NotFoundException('Anfrage nicht gefunden.');
+    }
+    return this.toPublicResponse(request);
+  }
+
   @Get(':id')
   async getPublicById(@Param('id') id: string): Promise<PublicRequestResponse> {
     const request = await this.service.findPublicById(id);

@@ -65,6 +65,10 @@ export class RequestService {
     return this.http.get<ManagedRequest>(`${this.apiUrl}/requests/manage/${token}`);
   }
 
+  getDeleteConfirm(token: string): Observable<PublicRequest> {
+    return this.http.get<PublicRequest>(`${this.apiUrl}/requests/delete-confirm/${token}`);
+  }
+
   create(request: CreateRequestDto): Observable<PublicRequest> {
     return this.http.post<PublicRequest>(`${this.apiUrl}/requests`, request);
   }
