@@ -52,6 +52,14 @@
         backend = backend;
         frontend = frontend;
       };
-      devShells.${system}.default = pkgs.mkShell { packages = [ nodejs ]; };
+      devShells.${system}.default = pkgs.mkShell {
+        packages = [ nodejs ];
+        shellHook = ''
+          echo "sportbuddy dev shell — node $(node --version)"
+          # Drop into the user's interactive zsh (loads ~/.zshrc); guarded so
+          # `nix develop -c <cmd>` and non-interactive uses still run in bash.
+          [[ $- == *i* ]] && exec ${pkgs.zsh}/bin/zsh
+        '';
+      };
     };
 }
