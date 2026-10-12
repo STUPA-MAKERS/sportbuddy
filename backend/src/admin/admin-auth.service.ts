@@ -144,8 +144,10 @@ export class AdminAuthService {
       });
       let claims: Record<string, unknown> = { ...tokens.claims() };
       if (readClaim(claims, this.groupsClaim) === undefined && tokens.access_token) {
-        // With the token set, openid-client checks that userinfo belongs to the ID token's subject.
-        claims = { ...claims, ...(await client.userinfo(tokens)), sub: claims.sub };
+        const info = await client.userinfo(tokens.access_token);
+        // Userinfo must describe the person the ID token was issued for.
+        if (info.sub !== claims.sub) throw new Error('userinfo sub mismatch');
+        claims = { ...claims, ...info };
       }
       if (!hasGroup(readClaim(claims, this.groupsClaim), this.adminGroup)) {
         this.logger.warn(`Anmeldung ohne Gruppe ${this.adminGroup}: ${String(claims.sub)}`);

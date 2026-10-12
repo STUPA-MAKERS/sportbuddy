@@ -105,7 +105,11 @@ docker compose logs -f
 
 Nginx Reverse Proxy:
 ```nginx
-location /api { proxy_pass http://localhost:8093; }
+location /api {
+    proxy_pass http://localhost:8093;
+    # The backend takes the client address from here, e.g. to spot duplicate reports.
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
 location /    { proxy_pass http://localhost:8094; }
 ```
 
