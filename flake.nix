@@ -14,7 +14,7 @@
         version = "1.0.0";
         src = ./backend;
         inherit nodejs;
-        npmDepsHash = "sha256-tHPgNjaUM4LWvNe9MvOnrh93pHzc4tMUnJmaUd/Pqyo=";
+        npmDepsHash = "sha256-G39Ld9c4ektD+q/ucswmy60ma9oX0/uOywEbbndewjg=";
         npmBuildScript = "build";
         CI = "true";
         # NestJS "nest build" emits compiled JS into dist/. Runtime email
@@ -34,7 +34,7 @@
         version = "0.0.0";
         src = ./frontend;
         inherit nodejs;
-        npmDepsHash = "sha256-W3fq6C6/3L25WSiVPcH89IjQTEWxPmwbzSSs34unQhQ=";
+        npmDepsHash = "sha256-mVwX+9igCBeky1f0LGhp4CS08LYRsoMQKGB3l/ebSDo=";
         npmBuildScript = "build";
         # Angular CLI otherwise prompts for analytics consent and hangs.
         env.NG_CLI_ANALYTICS = "false";

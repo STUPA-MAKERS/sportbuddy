@@ -56,7 +56,7 @@ export class AdminController {
   @Get('requests')
   async list(@Query('status') status?: string, @Query('q') q?: string) {
     const wanted = STATUSES.includes(status as ModerationStatus) ? (status as ModerationStatus | 'all') : 'review';
-    const { counts, items } = await this.requests.listForModeration({ status: wanted, q: q?.slice(0, 100) });
+    const { counts, items } = await this.requests.listForModeration({ status: wanted, q: typeof q === 'string' ? q.slice(0, 100) : undefined });
     return {
       counts,
       items: items.map(({ request, openReports, status }) => ({

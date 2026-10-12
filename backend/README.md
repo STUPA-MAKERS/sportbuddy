@@ -27,4 +27,3 @@ GET    /api/altcha/challenge
 GET    /api/sports
 ```
 
-`/email/*` Endpunkte erfordern `X-Api-Key` Header.

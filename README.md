@@ -45,10 +45,9 @@ Alle Secrets leben in einer einzigen `.env` im Root-Verzeichnis. Vorlage: `.env.
 | `FRONTEND_URL` | CORS-Origin (z.B. `https://sportbuddy.hs-rt.de`) |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | E-Mail |
 | `SMTP_TLS_REJECT_UNAUTHORIZED` | `true` (default) oder `false` für selbstsignierte Certs |
-| `API_SECRET` | Schützt interne `/email/*` Endpunkte (`X-Api-Key` Header) |
-| `ALTCHA_HMAC_KEY` | HMAC-Key für Altcha-Challenges |
+| `ALTCHA_HMAC_KEY` | HMAC-Key für Altcha-Challenges (z.B. `openssl rand -hex 32`) |
 | `MODERATION_EMAIL` | Optional: zusätzliche Empfänger für Hinweise auf neue Meldungen, kommagetrennt. Alle Admins, die sich einmal angemeldet haben, bekommen sie ohnehin (abschaltbar in den Einstellungen). |
-| `SESSION_SECRET` | Signiert das Sitzungs-Cookie der Verwaltung |
+| `SESSION_SECRET` | Signiert das Sitzungs-Cookie der Verwaltung. Mindestens 32 zufällige Zeichen (z.B. `openssl rand -hex 32`); sonst bleibt die Anmeldung aus. |
 | `OIDC_ISSUER` / `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | OpenID-Connect-Client für die Verwaltung |
 | `OIDC_REDIRECT_URI` | Default `${FRONTEND_URL}/api/admin/auth/callback` |
 | `OIDC_SCOPES` | Default `openid profile email` |

@@ -9,6 +9,7 @@ async function bootstrap() {
 
   // Behind the nginx proxy: take the client address from X-Forwarded-For set by private-network proxies.
   app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+  app.disable('x-powered-by');
 
   app.use(cookieParser());
 

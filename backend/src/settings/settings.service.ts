@@ -18,7 +18,11 @@ import { SportEntity } from './sport.entity';
 export function matchesBlockedPattern(email: string, pattern: string): boolean {
   const address = email.trim().toLowerCase();
   const p = pattern.trim().toLowerCase();
-  if (p.startsWith('*@')) return address.endsWith(p.slice(1));
+  // "*@example.org" also covers subdomains such as "mail.example.org".
+  if (p.startsWith('*@')) {
+    const domain = address.slice(address.lastIndexOf('@') + 1);
+    return domain === p.slice(2) || domain.endsWith(`.${p.slice(2)}`);
+  }
   return address === p;
 }
 

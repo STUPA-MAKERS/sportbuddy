@@ -20,6 +20,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { assertAltcha } from '../common/altcha';
+import { reporterAddress } from '../common/client-address';
 import { generateToken } from '../common/tokens';
 import { EmailService } from '../email/email.service';
 import { SettingsService } from '../settings/settings.service';
@@ -49,11 +50,11 @@ export class RequestsController {
     return this.config.get<string>('FRONTEND_URL', 'http://localhost:4200');
   }
 
-  /** Keyed hash of the client IP; the address itself is never stored. */
+  /** Keyed hash of the client IP (IPv6 by /64); the address itself is never stored. */
   private reporterHash(ip: string | undefined): string | null {
     const key = this.config.get<string>('ALTCHA_HMAC_KEY');
     if (!ip || !key) return null;
-    return crypto.createHmac('sha256', key).update(`report:${ip}`).digest('hex');
+    return crypto.createHmac('sha256', key).update(`report:${reporterAddress(ip)}`).digest('hex');
   }
 
   /** One email per moderator, one after another, so no one sees the others' addresses. */
@@ -127,8 +128,8 @@ export class RequestsController {
     const rawTake = take ? parseInt(take, 10) : 50;
     const rawSkip = skip ? parseInt(skip, 10) : 0;
     const { items, total } = await this.service.listPublic({
-      sport: sport || undefined,
-      q: q?.slice(0, 100),
+      sport: typeof sport === 'string' && sport ? sport : undefined,
+      q: typeof q === 'string' ? q.slice(0, 100) : undefined,
       take: Number.isFinite(rawTake) ? Math.min(Math.max(rawTake, 1), 100) : 50,
       skip: Number.isFinite(rawSkip) ? Math.max(rawSkip, 0) : 0,
     });

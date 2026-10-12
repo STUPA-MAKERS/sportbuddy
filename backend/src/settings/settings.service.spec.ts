@@ -12,6 +12,11 @@ describe('blocked email patterns', () => {
     expect(matchesBlockedPattern('x@notwegwerfmail.de', '*@wegwerfmail.de')).toBe(false);
   });
 
+  it('matches subdomains of a blocked domain', () => {
+    expect(matchesBlockedPattern('x@mail.wegwerfmail.de', '*@wegwerfmail.de')).toBe(true);
+    expect(matchesBlockedPattern('x@mail.notwegwerfmail.de', '*@wegwerfmail.de')).toBe(false);
+  });
+
   it('normalizes and validates input', () => {
     expect(normalizeBlockedPattern('  *@Spam.DE ')).toBe('*@spam.de');
     expect(() => normalizeBlockedPattern('*@')).toThrow(BadRequestException);
