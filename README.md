@@ -31,6 +31,28 @@ Das Flake bindet das ui-kit-Submodul ein (`inputs.self.submodules = true`, ab Ni
 Nach Änderungen an einer `package-lock.json` den `npmDepsHash` in `flake.nix` aktualisieren
 (`nix run nixpkgs#prefetch-npm-deps -- frontend/package-lock.json`).
 
+### NixOS-Modul
+
+Das Flake liefert `nixosModules.default` mit `services.sportbuddy`: das Backend als
+systemd-Dienst, standardmäßig nur auf `127.0.0.1:3000`, mit einer lokalen PostgreSQL-Datenbank.
+Das Backend erreicht sie über den Unix-Socket mit Peer-Authentifizierung und braucht so kein
+Datenbank-Passwort. Die Secrets (`SMTP_PASS`, `API_SECRET`, `ALTCHA_HMAC_KEY`,
+`SESSION_SECRET`, `OIDC_CLIENT_SECRET`) kommen aus `environmentFile`. Den Webserver
+konfiguriert das Modul nicht: Er liefert `config.services.sportbuddy.frontend` aus und leitet
+`/api` an das Backend weiter, wie `frontend/nginx.conf`.
+
+```nix
+services.sportbuddy = {
+  enable = true;
+  url = "https://sportbuddy.example.org";
+  smtp = { host = "mail.example.org"; user = "noreply@example.org"; from = "noreply@example.org"; };
+  oidc.issuer = "https://sso.example.org/application/o/sportbuddy/";
+  environmentFile = "/run/secrets/sportbuddy-env";
+};
+```
+
+`nix flake check` startet das Modul in einer VM (`checks.x86_64-linux.module`).
+
 Sport- und UI-Symbole kommen aus `@material-symbols/svg-400` und werden nach
 `frontend/src/app/shared/symbols.generated.ts` erzeugt: `npm run symbols` im Frontend.
 

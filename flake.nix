@@ -17,16 +17,21 @@
         npmDepsHash = "sha256-tHPgNjaUM4LWvNe9MvOnrh93pHzc4tMUnJmaUd/Pqyo=";
         npmBuildScript = "build";
         CI = "true";
-        # NestJS "nest build" emits compiled JS into dist/. Runtime email
-        # templates live alongside it (see backend/Dockerfile).
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        # NestJS "nest build" emits compiled JS into dist/, which requires its
+        # dependencies at runtime, so the production node_modules ship with it.
+        # The email templates live next to dist/ (see backend/Dockerfile).
         installPhase = ''
           runHook preInstall
-          mkdir -p $out
-          cp -r dist $out/dist
-          cp -r templates $out/templates
-          cp package.json $out/package.json
+          npm prune --omit=dev --no-save
+          app=$out/lib/sportbuddy-backend
+          mkdir -p $app $out/bin
+          cp -r dist templates node_modules package.json $app/
+          makeWrapper ${nodejs}/bin/node $out/bin/sportbuddy-backend \
+            --add-flags $app/dist/main.js
           runHook postInstall
         '';
+        meta.mainProgram = "sportbuddy-backend";
       };
 
       frontend = pkgs.buildNpmPackage {
@@ -54,6 +59,12 @@
         backend = backend;
         frontend = frontend;
       };
+      # services.sportbuddy: the backend as a systemd service with a local
+      # PostgreSQL. The web server that serves the frontend is up to the host.
+      nixosModules.default = import ./nix/module.nix self;
+
+      checks.${system}.module = import ./nix/test.nix self pkgs;
+
       devShells.${system}.default = pkgs.mkShell {
         packages = [ nodejs ];
         shellHook = ''
