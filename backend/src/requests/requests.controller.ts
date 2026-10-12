@@ -10,6 +10,7 @@ import {
   HttpException,
   HttpStatus,
   Ip,
+  Logger,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -35,6 +36,8 @@ const MAX_RESENDS = 5;
 
 @Controller('api/requests')
 export class RequestsController {
+  private readonly logger = new Logger(RequestsController.name);
+
   constructor(
     private readonly service: RequestsService,
     private readonly settings: SettingsService,
@@ -51,6 +54,16 @@ export class RequestsController {
     const key = this.config.get<string>('ALTCHA_HMAC_KEY');
     if (!ip || !key) return null;
     return crypto.createHmac('sha256', key).update(`report:${ip}`).digest('hex');
+  }
+
+  /** One email per moderator, one after another, so no one sees the others' addresses. */
+  private async notifyModerators(data: Parameters<EmailService['sendReportNotificationEmail']>[1]) {
+    try {
+      const recipients = await this.settings.moderationRecipients(this.config.get<string>('MODERATION_EMAIL'));
+      for (const to of recipients) await this.emailService.sendReportNotificationEmail(to, data);
+    } catch (error) {
+      this.logger.error('Moderation konnte nicht benachrichtigt werden', error);
+    }
   }
 
   private async assertNotBlocked(email: string) {
@@ -255,21 +268,16 @@ export class RequestsController {
       this.reporterHash(ip),
     );
     if (!duplicate && settings.notifyOnReport) {
-      // One email per moderator, so no one sees the others' addresses.
-      const recipients = await this.settings.moderationRecipients(this.config.get<string>('MODERATION_EMAIL'));
-      await Promise.all(
-        recipients.map((to) =>
-          this.emailService.sendReportNotificationEmail(to, {
-            requestTitle: request.title,
-            requestSport: request.sport,
-            reason: body.reason,
-            comment,
-            openReports,
-            autoHidden,
-            adminUrl: `${this.frontendUrl}/admin/moderation/${request.id}`,
-          }),
-        ),
-      );
+      // In the background, so a slow mail server never holds up the reporter.
+      void this.notifyModerators({
+        requestTitle: request.title,
+        requestSport: request.sport,
+        reason: body.reason,
+        comment,
+        openReports,
+        autoHidden,
+        adminUrl: `${this.frontendUrl}/admin/moderation/${request.id}`,
+      });
     }
     return { success: true };
   }

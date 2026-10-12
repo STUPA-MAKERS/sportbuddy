@@ -45,6 +45,8 @@ export interface AdminSettings {
   moderators: Moderator[];
   /** Addresses that get moderation emails. */
   recipients: string[];
+  /** Moderators who have not signed in for this many days get no emails. */
+  inactiveAfterDays: number;
 }
 
 export interface Moderator {
@@ -53,6 +55,8 @@ export interface Moderator {
   email: string | null;
   notify: boolean;
   lastLoginAt: string;
+  /** Signed in within `inactiveAfterDays`. */
+  active: boolean;
 }
 
 export interface AdminSport {
@@ -155,6 +159,10 @@ export class AdminApiService {
 
   setModeratorNotify(sub: string, notify: boolean) {
     return this.http.put<AdminSettings>(`${this.base}/moderators/${encodeURIComponent(sub)}`, { notify });
+  }
+
+  removeModerator(sub: string) {
+    return this.http.delete<AdminSettings>(`${this.base}/moderators/${encodeURIComponent(sub)}`);
   }
 
   sports() {

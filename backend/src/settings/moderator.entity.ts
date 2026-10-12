@@ -20,7 +20,7 @@ export class ModeratorEntity {
   @Column({ default: true })
   notify: boolean;
 
-  @Column({ type: 'timestamptz' })
+  @Column({ type: 'timestamptz', default: () => 'now()' })
   lastLoginAt: Date;
 
   @UpdateDateColumn({ type: 'timestamptz' })

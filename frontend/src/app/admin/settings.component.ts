@@ -85,14 +85,37 @@ export class SettingsComponent {
     this.save({ [key]: value });
   }
 
+  protected readonly moderatorBusy = signal<string | null>(null);
+
   protected setNotify(m: Moderator, notify: boolean) {
-    this.admin.setModeratorNotify(m.sub, notify).subscribe({
+    this.moderatorCall(m, this.admin.setModeratorNotify(m.sub, notify), notify ? `${m.name} bekommt Moderations-E-Mails` : `${m.name} bekommt keine Moderations-E-Mails mehr`);
+  }
+
+  protected removeModerator(m: Moderator) {
+    this.moderatorCall(m, this.admin.removeModerator(m.sub), `${m.name} entfernt`);
+  }
+
+  private moderatorCall(m: Moderator, call: Observable<AdminSettings>, done: string) {
+    if (this.moderatorBusy()) return;
+    this.moderatorBusy.set(m.sub);
+    call.subscribe({
       next: (s) => {
-        this.applySettings(s);
-        this.toast.success(notify ? `${m.name} bekommt Moderations-E-Mails` : `${m.name} bekommt keine Moderations-E-Mails mehr`);
+        // Only the settings, so number fields being edited keep their value.
+        this.settings.set(s);
+        this.moderatorBusy.set(null);
+        this.toast.success(done);
       },
-      error: (e) => this.fail(e),
+      error: (e) => {
+        this.moderatorBusy.set(null);
+        this.fail(e);
+        this.reloadSettings();
+      },
     });
+  }
+
+  /** Puts switches back to the server's state after a failed change. */
+  private reloadSettings() {
+    this.admin.settings().subscribe({ next: (s) => this.settings.set({ ...s }) });
   }
 
   private save(changes: Partial<AdminSettings>) {
@@ -101,7 +124,10 @@ export class SettingsComponent {
         this.applySettings(s);
         this.toast.success('Gespeichert');
       },
-      error: (e) => this.fail(e),
+      error: (e) => {
+        this.fail(e);
+        this.reloadSettings();
+      },
     });
   }
 

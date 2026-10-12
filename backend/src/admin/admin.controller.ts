@@ -20,7 +20,7 @@ import { EmailService } from '../email/email.service';
 import { RequestEntity } from '../requests/request.entity';
 import { toManaged } from '../requests/request.mapper';
 import { ModerationStatus, RequestsService } from '../requests/requests.service';
-import { SettingsService } from '../settings/settings.service';
+import { MODERATOR_INACTIVE_DAYS, SettingsService, isActiveModerator } from '../settings/settings.service';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminGuard, AdminRequest } from './admin.guard';
 import {
@@ -195,9 +195,17 @@ export class AdminController {
         email: m.email,
         notify: m.notify,
         lastLoginAt: m.lastLoginAt,
+        active: isActiveModerator(m),
       })),
+      inactiveAfterDays: MODERATOR_INACTIVE_DAYS,
       recipients: await this.settings.moderationRecipients(this.config.get<string>('MODERATION_EMAIL')),
     };
+  }
+
+  @Delete('moderators/:sub')
+  async removeModerator(@Param('sub') sub: string) {
+    await this.settings.removeModerator(sub);
+    return this.getSettings();
   }
 
   @Put('moderators/:sub')
