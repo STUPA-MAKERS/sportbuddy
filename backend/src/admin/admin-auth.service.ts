@@ -1,6 +1,7 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client, Issuer, generators } from 'openid-client';
+import { SettingsService } from '../settings/settings.service';
 import { hasGroup, readClaim, sign, verify } from './session';
 
 export const SESSION_COOKIE = 'sb_admin';
@@ -35,7 +36,10 @@ export class AdminAuthService {
   private readonly logger = new Logger(AdminAuthService.name);
   private client: Promise<Client> | null = null;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly settings: SettingsService,
+  ) {}
 
   get enabled(): boolean {
     return !!(this.config.get('OIDC_ISSUER') && this.config.get('OIDC_CLIENT_ID') && this.secret);
@@ -135,6 +139,7 @@ export class AdminAuthService {
       }
       if (!hasGroup(readClaim(claims, this.groupsClaim), this.adminGroup)) {
         this.logger.warn(`Anmeldung ohne Gruppe ${this.adminGroup}: ${String(claims.sub)}`);
+        if (claims.sub) await this.bookkeeping(() => this.settings.forgetModerator(String(claims.sub)));
         const denied = sign(
           { name: String(claims.name || claims.preferred_username || ''), email: claims.email ?? null, exp: Date.now() + LOGIN_TTL_MS },
           this.secret,
@@ -148,10 +153,20 @@ export class AdminAuthService {
         email: typeof claims.email === 'string' ? claims.email : null,
         exp: Date.now() + SESSION_TTL_MS,
       };
+      await this.bookkeeping(() => this.settings.recordModerator(user));
       return { ok: true, session: sign(user, this.secret, 'session'), returnTo: tx.returnTo };
     } catch (error) {
       this.logger.error('OIDC-Callback fehlgeschlagen', error);
       return { ok: false, reason: 'failed' };
+    }
+  }
+
+  /** The moderator list must never decide whether a login works. */
+  private async bookkeeping(task: () => Promise<void>) {
+    try {
+      await task();
+    } catch (error) {
+      this.logger.warn(`Moderatorenliste nicht aktualisiert: ${String(error)}`);
     }
   }
 

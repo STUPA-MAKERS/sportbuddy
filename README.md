@@ -47,7 +47,7 @@ Alle Secrets leben in einer einzigen `.env` im Root-Verzeichnis. Vorlage: `.env.
 | `SMTP_TLS_REJECT_UNAUTHORIZED` | `true` (default) oder `false` für selbstsignierte Certs |
 | `API_SECRET` | Schützt interne `/email/*` Endpunkte (`X-Api-Key` Header) |
 | `ALTCHA_HMAC_KEY` | HMAC-Key für Altcha-Challenges |
-| `MODERATION_EMAIL` | Optional: Empfänger für Hinweise auf neue Meldungen |
+| `MODERATION_EMAIL` | Optional: zusätzliche Empfänger für Hinweise auf neue Meldungen, kommagetrennt. Alle Admins, die sich einmal angemeldet haben, bekommen sie ohnehin (abschaltbar in den Einstellungen). |
 | `SESSION_SECRET` | Signiert das Sitzungs-Cookie der Verwaltung |
 | `OIDC_ISSUER` / `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | OpenID-Connect-Client für die Verwaltung |
 | `OIDC_REDIRECT_URI` | Default `${FRONTEND_URL}/api/admin/auth/callback` |

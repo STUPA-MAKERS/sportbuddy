@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DEFAULT_SPORTS } from '../requests/sports.constants';
 import { BlockedEmailEntity } from './blocked-email.entity';
+import { ModeratorEntity } from './moderator.entity';
 import { SettingsEntity } from './settings.entity';
 import { SportEntity } from './sport.entity';
 
@@ -33,6 +34,36 @@ export function normalizeBlockedPattern(raw: string): string {
   return p;
 }
 
+/** Moderators who have not signed in for this long get no more moderation emails. */
+export const MODERATOR_INACTIVE_DAYS = 90;
+
+/** A plain address: no display names, quotes, brackets or lists that a mailer could reinterpret. */
+const PLAIN_ADDRESS = /^[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
+
+export function plainAddress(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const address = raw.trim().toLowerCase();
+  return address.length <= 254 && PLAIN_ADDRESS.test(address) ? address : null;
+}
+
+export function isActiveModerator(m: Pick<ModeratorEntity, 'lastLoginAt'>, now = Date.now()): boolean {
+  return now - new Date(m.lastLoginAt).getTime() < MODERATOR_INACTIVE_DAYS * 86_400_000;
+}
+
+/**
+ * Who gets moderation emails: moderators who signed in recently, have an address and did
+ * not opt out, plus the comma separated MODERATION_EMAIL. Lower case, without duplicates.
+ */
+export function moderationRecipients(
+  moderators: Pick<ModeratorEntity, 'email' | 'notify' | 'lastLoginAt'>[],
+  extra: string | undefined,
+  now = Date.now(),
+): string[] {
+  const fromLogin = moderators.filter((m) => m.notify && isActiveModerator(m, now)).map((m) => m.email);
+  const fromEnv = (extra ?? '').split(/[,;\s]+/);
+  return [...new Set([...fromLogin, ...fromEnv].map(plainAddress).filter((e): e is string => !!e))];
+}
+
 @Injectable()
 export class SettingsService implements OnModuleInit {
   private readonly logger = new Logger(SettingsService.name);
@@ -44,6 +75,8 @@ export class SettingsService implements OnModuleInit {
     private readonly sportRepo: Repository<SportEntity>,
     @InjectRepository(BlockedEmailEntity)
     private readonly blockedRepo: Repository<BlockedEmailEntity>,
+    @InjectRepository(ModeratorEntity)
+    private readonly moderatorRepo: Repository<ModeratorEntity>,
   ) {}
 
   async onModuleInit() {
@@ -163,5 +196,44 @@ export class SettingsService implements OnModuleInit {
   async isBlocked(email: string): Promise<boolean> {
     const all = await this.blockedRepo.find();
     return all.some((b) => matchesBlockedPattern(email, b.pattern));
+  }
+
+  // --- moderators ----------------------------------------------------------
+
+  /** Records a successful admin login; keeps the person's notification choice. */
+  async recordModerator(user: { sub: string; name: string; email: string | null }) {
+    if (!user.sub || user.sub.length > 255) return;
+    await this.moderatorRepo
+      .createQueryBuilder()
+      .insert()
+      .into(ModeratorEntity)
+      .values({ sub: user.sub, name: user.name.slice(0, 200), email: plainAddress(user.email), lastLoginAt: new Date() })
+      .orUpdate(['name', 'email', 'lastLoginAt'], ['sub'])
+      .execute();
+  }
+
+  /** Someone signed in without the admin group: they no longer get moderation emails. */
+  async forgetModerator(sub: string) {
+    await this.moderatorRepo.delete({ sub });
+  }
+
+  listModerators() {
+    return this.moderatorRepo.find({ order: { name: 'ASC' } });
+  }
+
+  async setModeratorNotify(sub: string, notify: boolean) {
+    const moderator = await this.moderatorRepo.findOne({ where: { sub } });
+    if (!moderator) throw new NotFoundException('Unbekannte Person.');
+    moderator.notify = notify;
+    await this.moderatorRepo.save(moderator);
+  }
+
+  async removeModerator(sub: string) {
+    const result = await this.moderatorRepo.delete({ sub });
+    if (!result.affected) throw new NotFoundException('Unbekannte Person.');
+  }
+
+  async moderationRecipients(extra: string | undefined) {
+    return moderationRecipients(await this.moderatorRepo.find(), extra);
   }
 }

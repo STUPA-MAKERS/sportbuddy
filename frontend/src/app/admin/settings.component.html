@@ -69,13 +69,41 @@
                 <span class="fld-text">
                   <span class="fld-value" style="font-size: 14px; font-weight: 500">E-Mail an Moderation bei neuer Meldung</span>
                   <span class="fld-label">
-                    @if (s.moderationEmail) { Geht an {{ s.moderationEmail }}. }
-                    @else { Dafür MODERATION_EMAIL auf dem Server setzen. }
+                    @if (s.recipients.length) { An alle Admins, die sich in den letzten {{ s.inactiveAfterDays }} Tagen angemeldet haben, und MODERATION_EMAIL ({{ s.recipients.length }} Empfänger). }
+                    @else { Noch kein Empfänger: Admins kommen beim ersten Login dazu. }
                   </span>
                 </span>
-                <app-switch ariaLabel="E-Mail an Moderation bei neuer Meldung" [checked]="s.notifyOnReport && !!s.moderationEmail" [disabled]="!s.moderationEmail" (checkedChange)="toggle('notifyOnReport', $event)" />
+                <app-switch ariaLabel="E-Mail an Moderation bei neuer Meldung" [checked]="s.notifyOnReport && s.recipients.length > 0" [disabled]="!s.recipients.length" (checkedChange)="toggle('notifyOnReport', $event)" />
               </div>
             </div>
+            @if (s.moderators.length || s.moderationEmail) {
+              <h3 class="subtle" style="margin: 4px 4px 0; font-size: 12.5px; font-weight: 600">Empfänger</h3>
+              <div class="rowgroup">
+                @for (m of s.moderators; track m.sub) {
+                  <div class="fld-row">
+                    <app-symbol class="fld-ic" name="person" />
+                    <span class="fld-text">
+                      <span class="fld-value" style="font-size: 14px">{{ m.name }}</span>
+                      <span class="fld-label">
+                        {{ m.email ?? 'Keine E-Mail-Adresse vom Login' }} · zuletzt angemeldet {{ shortDate(m.lastLoginAt) }}@if (!m.active) { · inaktiv, bekommt keine E-Mails }
+                      </span>
+                    </span>
+                    <app-switch [ariaLabel]="'Moderations-E-Mails an ' + m.name" [checked]="m.notify && !!m.email && m.active" [disabled]="!m.email || !m.active || moderatorBusy() === m.sub" (checkedChange)="setNotify(m, $event)" />
+                    <button class="icbtn" type="button" [attr.aria-label]="m.name + ' aus der Liste entfernen'" [disabled]="moderatorBusy() === m.sub" (click)="removeModerator(m)"><app-icon name="x" [size]="18" /></button>
+                  </div>
+                }
+                @if (s.moderationEmail) {
+                  <div class="fld-row">
+                    <app-symbol class="fld-ic" name="forward_to_inbox" />
+                    <span class="fld-text">
+                      <span class="fld-value" style="font-size: 14px">{{ s.moderationEmail }}</span>
+                      <span class="fld-label">Fest eingestellt über MODERATION_EMAIL</span>
+                    </span>
+                  </div>
+                }
+              </div>
+              <p class="subtle">Admins kommen beim Login dazu. Wer sich ohne die Gruppe anmeldet oder {{ s.inactiveAfterDays }} Tage nicht angemeldet war, bekommt keine E-Mails mehr. Wer die Gruppe verlassen hat, lässt sich hier auch direkt entfernen.</p>
+            }
             <p class="subtle">Zugriff auf die Verwaltung hat die Gruppe <span class="code-chip">{{ s.adminGroup }}</span> (OIDC_ADMIN_GROUP).</p>
           }
         </section>

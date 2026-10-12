@@ -119,3 +119,8 @@ export class BlockDto {
   @MaxLength(120)
   reason?: string;
 }
+
+export class ModeratorNotifyDto {
+  @IsBoolean()
+  notify: boolean;
+}

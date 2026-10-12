@@ -41,6 +41,22 @@ export interface AdminSettings {
   notifyOnReport: boolean;
   moderationEmail: string | null;
   adminGroup: string;
+  /** Everyone who signed in with the admin group. */
+  moderators: Moderator[];
+  /** Addresses that get moderation emails. */
+  recipients: string[];
+  /** Moderators who have not signed in for this many days get no emails. */
+  inactiveAfterDays: number;
+}
+
+export interface Moderator {
+  sub: string;
+  name: string;
+  email: string | null;
+  notify: boolean;
+  lastLoginAt: string;
+  /** Signed in within `inactiveAfterDays`. */
+  active: boolean;
 }
 
 export interface AdminSport {
@@ -139,6 +155,14 @@ export class AdminApiService {
 
   saveSettings(body: Partial<AdminSettings>) {
     return this.http.put<AdminSettings>(`${this.base}/settings`, body);
+  }
+
+  setModeratorNotify(sub: string, notify: boolean) {
+    return this.http.put<AdminSettings>(`${this.base}/moderators/${encodeURIComponent(sub)}`, { notify });
+  }
+
+  removeModerator(sub: string) {
+    return this.http.delete<AdminSettings>(`${this.base}/moderators/${encodeURIComponent(sub)}`);
   }
 
   sports() {
