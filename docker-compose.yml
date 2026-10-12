@@ -34,7 +34,6 @@ services:
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_FROM}
       SMTP_TLS_REJECT_UNAUTHORIZED: ${SMTP_TLS_REJECT_UNAUTHORIZED:-true}
-      API_SECRET: ${API_SECRET}
       ALTCHA_HMAC_KEY: ${ALTCHA_HMAC_KEY}
       MODERATION_EMAIL: ${MODERATION_EMAIL:-}
       SESSION_SECRET: ${SESSION_SECRET}
@@ -45,8 +44,9 @@ services:
       OIDC_SCOPES: ${OIDC_SCOPES:-openid profile email}
       OIDC_GROUPS_CLAIM: ${OIDC_GROUPS_CLAIM:-groups}
       OIDC_ADMIN_GROUP: ${OIDC_ADMIN_GROUP:-STUPA.Sportbuddy.Admin}
+    # Only for the host; from outside the API is reached through the frontend's /api proxy.
     ports:
-      - "8093:3000"
+      - "127.0.0.1:8093:3000"
     depends_on:
       postgres:
         condition: service_healthy

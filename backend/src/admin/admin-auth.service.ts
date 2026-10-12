@@ -10,6 +10,8 @@ export const LOGIN_COOKIE = 'sb_oidc';
 export const DENIED_COOKIE = 'sb_denied';
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const LOGIN_TTL_MS = 10 * 60 * 1000;
+/** Anyone who knows the secret can sign a session, so a short or sample value must not work. */
+const MIN_SECRET_LENGTH = 32;
 
 export interface AdminUser {
   sub: string;
@@ -39,7 +41,13 @@ export class AdminAuthService {
   constructor(
     private readonly config: ConfigService,
     private readonly settings: SettingsService,
-  ) {}
+  ) {
+    if (this.config.get<string>('SESSION_SECRET') && !this.secret) {
+      this.logger.error(
+        `SESSION_SECRET ist zu kurz oder ein Beispielwert (mindestens ${MIN_SECRET_LENGTH} zufällige Zeichen). Die Anmeldung bleibt aus.`,
+      );
+    }
+  }
 
   get enabled(): boolean {
     return !!(this.config.get('OIDC_ISSUER') && this.config.get('OIDC_CLIENT_ID') && this.secret);
@@ -55,7 +63,8 @@ export class AdminAuthService {
   }
 
   private get secret(): string {
-    return this.config.get<string>('SESSION_SECRET') || '';
+    const secret = this.config.get<string>('SESSION_SECRET') || '';
+    return secret.length >= MIN_SECRET_LENGTH && !/changeme/i.test(secret) ? secret : '';
   }
 
   get frontendUrl(): string {
@@ -135,7 +144,10 @@ export class AdminAuthService {
       });
       let claims: Record<string, unknown> = { ...tokens.claims() };
       if (readClaim(claims, this.groupsClaim) === undefined && tokens.access_token) {
-        claims = { ...claims, ...(await client.userinfo(tokens.access_token)) };
+        const info = await client.userinfo(tokens.access_token);
+        // Userinfo must describe the person the ID token was issued for.
+        if (info.sub !== claims.sub) throw new Error('userinfo sub mismatch');
+        claims = { ...claims, ...info };
       }
       if (!hasGroup(readClaim(claims, this.groupsClaim), this.adminGroup)) {
         this.logger.warn(`Anmeldung ohne Gruppe ${this.adminGroup}: ${String(claims.sub)}`);
