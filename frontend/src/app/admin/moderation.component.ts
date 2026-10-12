@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -46,7 +46,7 @@ const TABS: { key: StatusFilter; label: string }[] = [
   imports: [FormsModule, RouterLink, ButtonComponent, CheckboxComponent, DialogComponent, IconComponent, SymbolComponent],
   templateUrl: './moderation.component.html',
 })
-export class ModerationComponent {
+export class ModerationComponent implements OnInit {
   private readonly admin = inject(AdminApiService);
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
@@ -90,9 +90,13 @@ export class ModerationComponent {
     }),
   );
 
-  constructor() {
+  ngOnInit() {
+    // Router inputs are bound after the constructor, so the deep link is read here.
     const s = this.status();
     if (s) this.tab.set(s);
+  }
+
+  constructor() {
     this.api.loadSports().subscribe();
 
     toObservable(computed(() => ({ tab: this.tab(), q: this.q() })))

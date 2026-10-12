@@ -76,8 +76,9 @@ export class ApiService {
       .pipe(tap((c) => this.runtimeDays.set(c.runtimeDays)));
   }
 
-  list(filter: { sport?: string | null; q?: string; take?: number }) {
-    let params = new HttpParams().set('take', String(filter.take ?? 100));
+  list(filter: { sport?: string | null; q?: string; skip?: number; take?: number }) {
+    let params = new HttpParams().set('take', String(filter.take ?? 50));
+    if (filter.skip) params = params.set('skip', String(filter.skip));
     if (filter.sport) params = params.set('sport', filter.sport);
     if (filter.q?.trim()) params = params.set('q', filter.q.trim());
     return this.http.get<{ items: PublicRequest[]; total: number }>('/api/requests', { params });

@@ -48,6 +48,10 @@ export class DiscoverComponent {
   protected readonly sport = signal<string | null>(this.route.snapshot.queryParamMap.get('sport'));
   protected readonly showAllChips = signal(false);
   protected readonly items = signal<PublicRequest[]>([]);
+  /** Matches for the current filter on the server, for "Mehr laden". */
+  protected readonly matches = signal(0);
+  protected readonly hasMore = computed(() => this.items().length < this.matches());
+  protected readonly loadingMore = signal(false);
   protected readonly loaded = signal(false);
   /** Skeleton rows appear only when loading takes longer than 300 ms. */
   protected readonly showSkeleton = signal(false);
@@ -123,6 +127,7 @@ export class DiscoverComponent {
         if (result) {
           this.failed.set(false);
           this.items.set(result.items);
+          this.matches.set(result.total);
         }
       });
 
@@ -130,6 +135,23 @@ export class DiscoverComponent {
     effect(() => {
       if (this.phone() && this.id()) window.scrollTo({ top: 0 });
     });
+  }
+
+  protected loadMore() {
+    if (this.loadingMore()) return;
+    this.loadingMore.set(true);
+    this.api
+      .list({ q: this.q(), sport: this.sport(), skip: this.items().length })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          const known = new Set(this.items().map((r) => r.id));
+          this.items.update((items) => [...items, ...result.items.filter((r) => !known.has(r.id))]);
+          this.matches.set(result.total);
+          this.loadingMore.set(false);
+        },
+        error: () => this.loadingMore.set(false),
+      });
   }
 
   @HostListener('document:keydown', ['$event'])

@@ -1,24 +1,34 @@
 import * as crypto from 'crypto';
 
-/** A small signed cookie value: base64url(JSON).base64url(HMAC-SHA256). */
-export function sign(payload: object, secret: string): string {
+/** What a signed value is for. Part of the MAC, so a value signed for one purpose never verifies as another. */
+export type Purpose = 'session' | 'login' | 'denied';
+
+function mac(body: string, secret: string, purpose: Purpose): string {
+  return crypto.createHmac('sha256', secret).update(`${purpose}.${body}`).digest('base64url');
+}
+
+/** A small signed cookie value: base64url(JSON).base64url(HMAC-SHA256 over purpose and body). */
+export function sign(payload: object, secret: string, purpose: Purpose): string {
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  const mac = crypto.createHmac('sha256', secret).update(body).digest('base64url');
-  return `${body}.${mac}`;
+  return `${body}.${mac(body, secret, purpose)}`;
 }
 
 /** The payload, or null when the value is malformed, tampered with or expired (`exp` in ms). */
-export function verify<T extends { exp: number }>(value: string | undefined, secret: string): T | null {
+export function verify<T extends { exp: number }>(
+  value: string | undefined,
+  secret: string,
+  purpose: Purpose,
+): T | null {
   if (!value) return null;
   const dot = value.lastIndexOf('.');
   if (dot <= 0) return null;
   const body = value.slice(0, dot);
-  const mac = Buffer.from(value.slice(dot + 1));
-  const expected = Buffer.from(crypto.createHmac('sha256', secret).update(body).digest('base64url'));
-  if (mac.length !== expected.length || !crypto.timingSafeEqual(mac, expected)) return null;
+  const given = Buffer.from(value.slice(dot + 1));
+  const expected = Buffer.from(mac(body, secret, purpose));
+  if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) return null;
   try {
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as T;
-    if (typeof payload.exp !== 'number' || payload.exp < Date.now()) return null;
+    if (!payload || typeof payload !== 'object' || typeof payload.exp !== 'number' || payload.exp < Date.now()) return null;
     return payload;
   } catch {
     return null;

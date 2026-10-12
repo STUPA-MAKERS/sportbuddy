@@ -2,6 +2,7 @@ import { BadRequestException, Body, Controller, Get, InternalServerErrorExceptio
 import { ConfigService } from '@nestjs/config';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { createChallenge, verifySolution } from 'altcha-lib';
+import { CHALLENGE_TTL_MS } from '../common/altcha';
 
 class VerifyDto {
   @IsString()
@@ -21,12 +22,16 @@ export class AltchaController {
 
   @Get('challenge')
   async getChallenge() {
-    return createChallenge({ hmacKey: this.getKey(), maxNumber: 200000 });
+    return createChallenge({
+      hmacKey: this.getKey(),
+      maxNumber: 200000,
+      expires: new Date(Date.now() + CHALLENGE_TTL_MS),
+    });
   }
 
   @Post('verify')
   async verify(@Body() body: VerifyDto) {
-    const valid = await verifySolution(body.payload, this.getKey());
+    const valid = await verifySolution(body.payload, this.getKey(), true);
     if (!valid) throw new BadRequestException('Invalid altcha solution');
     return { success: true };
   }

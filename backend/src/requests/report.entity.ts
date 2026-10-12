@@ -28,6 +28,10 @@ export class ReportEntity {
   @Column({ type: 'text', nullable: true })
   comment: string | null;
 
+  /** Keyed hash of the reporter's IP address, so one person counts once per request. */
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  reporterHash: string | null;
+
   /** A moderator dismissed the report; it no longer counts. */
   @Column({ default: false })
   dismissed: boolean;

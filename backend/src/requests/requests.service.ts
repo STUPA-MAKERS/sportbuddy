@@ -120,6 +120,24 @@ export class RequestsService {
     return saved;
   }
 
+  /**
+   * Counts one resend of the confirmation email, atomically, so parallel calls cannot pass the
+   * limit together. False when the cooldown or the maximum stops it.
+   */
+  async claimVerificationResend(id: string, maxResends: number, cooldownMs: number): Promise<boolean> {
+    const result = await this.repo
+      .createQueryBuilder()
+      .update(RequestEntity)
+      .set({ verificationResends: () => '"verificationResends" + 1', verificationSentAt: () => 'now()' })
+      .where('id = :id', { id })
+      .andWhere('"verificationResends" < :maxResends', { maxResends })
+      .andWhere('("verificationSentAt" IS NULL OR "verificationSentAt" < :before)', {
+        before: new Date(Date.now() - cooldownMs),
+      })
+      .execute();
+    return (result.affected ?? 0) > 0;
+  }
+
   async save(entity: RequestEntity) {
     return this.repo.save(entity);
   }
@@ -159,8 +177,15 @@ export class RequestsService {
     reason: string,
     comment: string | null,
     autoHideThreshold: number,
-  ): Promise<{ autoHidden: boolean; openReports: number }> {
-    await this.reports.save(this.reports.create({ requestId: request.id, reason, comment }));
+    reporterHash: string | null = null,
+  ): Promise<{ duplicate: boolean; autoHidden: boolean; openReports: number }> {
+    if (reporterHash) {
+      const earlier = await this.reports.count({ where: { requestId: request.id, reporterHash, dismissed: false } });
+      if (earlier > 0) {
+        return { duplicate: true, autoHidden: false, openReports: await this.openReportCount(request.id) };
+      }
+    }
+    await this.reports.save(this.reports.create({ requestId: request.id, reason, comment, reporterHash }));
     await this.log(request.id, 'reported', null, reason);
     const openReports = await this.openReportCount(request.id);
     if (autoHideThreshold > 0 && openReports >= autoHideThreshold && !request.hidden) {
@@ -169,9 +194,9 @@ export class RequestsService {
       request.hiddenAt = new Date();
       await this.repo.save(request);
       await this.log(request.id, 'auto-hidden', null, `${openReports} Meldungen`);
-      return { autoHidden: true, openReports };
+      return { duplicate: false, autoHidden: true, openReports };
     }
-    return { autoHidden: false, openReports };
+    return { duplicate: false, autoHidden: false, openReports };
   }
 
   // --- moderation ----------------------------------------------------------

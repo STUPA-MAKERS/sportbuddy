@@ -112,14 +112,14 @@ export class AdminAuthService {
       state: tx.state,
       nonce: tx.nonce,
     });
-    return { url, transaction: sign(tx, this.secret) };
+    return { url, transaction: sign(tx, this.secret, 'login') };
   }
 
   async finishLogin(
     req: Parameters<Client['callbackParams']>[0],
     transactionCookie: string | undefined,
   ): Promise<CallbackResult> {
-    const tx = verify<LoginTransaction>(transactionCookie, this.secret);
+    const tx = verify<LoginTransaction>(transactionCookie, this.secret, 'login');
     if (!tx) return { ok: false, reason: 'failed' };
     try {
       const client = await this.getClient();
@@ -138,6 +138,7 @@ export class AdminAuthService {
         const denied = sign(
           { name: String(claims.name || claims.preferred_username || ''), email: claims.email ?? null, exp: Date.now() + LOGIN_TTL_MS },
           this.secret,
+          'denied',
         );
         return { ok: false, reason: 'forbidden', denied };
       }
@@ -147,7 +148,7 @@ export class AdminAuthService {
         email: typeof claims.email === 'string' ? claims.email : null,
         exp: Date.now() + SESSION_TTL_MS,
       };
-      return { ok: true, session: sign(user, this.secret), returnTo: tx.returnTo };
+      return { ok: true, session: sign(user, this.secret, 'session'), returnTo: tx.returnTo };
     } catch (error) {
       this.logger.error('OIDC-Callback fehlgeschlagen', error);
       return { ok: false, reason: 'failed' };
@@ -156,13 +157,14 @@ export class AdminAuthService {
 
   readDenied(cookie: string | undefined): { name: string; email: string | null } | null {
     if (!this.secret) return null;
-    const value = verify<{ name: string; email: string | null; exp: number }>(cookie, this.secret);
+    const value = verify<{ name: string; email: string | null; exp: number }>(cookie, this.secret, 'denied');
     return value ? { name: value.name, email: value.email } : null;
   }
 
   readSession(cookie: string | undefined): AdminUser | null {
     if (!this.secret) return null;
-    return verify<AdminUser>(cookie, this.secret);
+    const user = verify<AdminUser>(cookie, this.secret, 'session');
+    return user && typeof user.sub === 'string' && user.sub ? user : null;
   }
 
   async logoutUrl(): Promise<string | null> {

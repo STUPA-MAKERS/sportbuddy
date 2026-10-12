@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import {
   BadRequestException,
   Body,
@@ -8,6 +9,7 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
+  Ip,
   NotFoundException,
   Param,
   ParseUUIDPipe,
@@ -42,6 +44,13 @@ export class RequestsController {
 
   private get frontendUrl() {
     return this.config.get<string>('FRONTEND_URL', 'http://localhost:4200');
+  }
+
+  /** Keyed hash of the client IP; the address itself is never stored. */
+  private reporterHash(ip: string | undefined): string | null {
+    const key = this.config.get<string>('ALTCHA_HMAC_KEY');
+    if (!ip || !key) return null;
+    return crypto.createHmac('sha256', key).update(`report:${ip}`).digest('hex');
   }
 
   private async assertNotBlocked(email: string) {
@@ -154,7 +163,14 @@ export class RequestsController {
     if (updates.sport !== undefined && updates.sport !== request.sport) {
       await this.assertSport(updates.sport);
     }
+    const { reviewBeforePublish } = await this.settings.get();
+    const contentChanged =
+      (updates.title !== undefined && updates.title.trim() !== request.title) ||
+      (updates.description !== undefined && updates.description.trim() !== request.description) ||
+      (updates.sport !== undefined && updates.sport !== request.sport);
     const saved = await this.service.update(request, {
+      // With review before publishing on, changed content goes back into the queue.
+      ...(reviewBeforePublish && request.active && contentChanged && { pendingReview: true }),
       ...(updates.title !== undefined && { title: updates.title.trim() }),
       ...(updates.sport !== undefined && { sport: updates.sport }),
       ...(updates.description !== undefined && { description: updates.description.trim() }),
@@ -224,21 +240,22 @@ export class RequestsController {
 
   @Post(':id/reports')
   @HttpCode(201)
-  async report(@Param('id', ParseUUIDPipe) id: string, @Body() body: CreateReportDto) {
+  async report(@Param('id', ParseUUIDPipe) id: string, @Body() body: CreateReportDto, @Ip() ip: string) {
     const request = await this.service.findPublicById(id);
     if (!request) throw new NotFoundException('Anfrage nicht gefunden.');
     await assertAltcha(this.config, body.altchaPayload);
 
     const settings = await this.settings.get();
     const comment = body.comment?.trim() || null;
-    const { autoHidden, openReports } = await this.service.report(
+    const { duplicate, autoHidden, openReports } = await this.service.report(
       request,
       body.reason,
       comment,
       settings.autoHideThreshold,
+      this.reporterHash(ip),
     );
     const moderationEmail = this.config.get<string>('MODERATION_EMAIL');
-    if (settings.notifyOnReport && moderationEmail) {
+    if (!duplicate && settings.notifyOnReport && moderationEmail) {
       await this.emailService.sendReportNotificationEmail(moderationEmail, {
         requestTitle: request.title,
         requestSport: request.sport,
@@ -260,8 +277,7 @@ export class RequestsController {
     if (!request || request.active || !request.verifyToken) {
       throw new NotFoundException('Keine unbestätigte Anfrage gefunden.');
     }
-    const last = request.verificationSentAt?.getTime() ?? 0;
-    if (request.verificationResends >= MAX_RESENDS || Date.now() - last < RESEND_COOLDOWN_MS) {
+    if (!(await this.service.claimVerificationResend(request.id, MAX_RESENDS, RESEND_COOLDOWN_MS))) {
       throw new HttpException(
         'Bitte warte einen Moment, bevor du die E-Mail noch einmal anforderst.',
         HttpStatus.TOO_MANY_REQUESTS,

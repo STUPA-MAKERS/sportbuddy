@@ -111,7 +111,7 @@ export class SettingsService implements OnModuleInit {
     const sport = await this.getSport(id);
     const previousName = sport.name;
     if (changes.name !== undefined && changes.name.trim() !== sport.name) {
-      await this.assertNameFree(changes.name);
+      await this.assertNameFree(changes.name, sport.id);
       sport.name = changes.name.trim();
     }
     if (changes.icon !== undefined) sport.icon = changes.icon;
@@ -134,11 +134,12 @@ export class SettingsService implements OnModuleInit {
     await this.sportRepo.delete({ id });
   }
 
-  private async assertNameFree(name: string) {
-    const existing = await this.sportRepo
+  private async assertNameFree(name: string, exceptId?: number) {
+    const qb = this.sportRepo
       .createQueryBuilder('s')
-      .where('LOWER(s.name) = LOWER(:name)', { name: name.trim() })
-      .getOne();
+      .where('LOWER(s.name) = LOWER(:name)', { name: name.trim() });
+    if (exceptId !== undefined) qb.andWhere('s.id != :exceptId', { exceptId });
+    const existing = await qb.getOne();
     if (existing) throw new ConflictException('Diese Sportart gibt es schon.');
   }
 
