@@ -7,6 +7,8 @@ import { EmailModule } from './email/email.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RequestsModule } from './requests/requests.module';
 import { CleanupService } from './cleanup/cleanup.service';
+import { SettingsModule } from './settings/settings.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -30,7 +32,9 @@ import { CleanupService } from './cleanup/cleanup.service';
     }),
     AltchaModule,
     EmailModule,
+    SettingsModule,
     RequestsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [CleanupService],

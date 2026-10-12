@@ -1,0 +1,212 @@
+<main class="ld" [class.ld--detail-open]="!!id()" style="max-width: none; padding: 32px 28px 28px 4px">
+  <section class="ld-list" aria-labelledby="ph">
+    <div style="padding: 0 4px 4px">
+      <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap">
+        <h1 class="ph-title" id="ph">Moderation</h1>
+        @if (counts(); as c) { <span class="ph-meta num">{{ c.review }} zu prüfen</span> }
+      </div>
+    </div>
+
+    <label class="sp sp--sm">
+      <app-icon name="search" [size]="20" />
+      <input type="search" placeholder="Titel, Sportart oder E-Mail" aria-label="Anfragen durchsuchen" [value]="q()" (input)="q.set($any($event.target).value)" />
+    </label>
+
+    <div class="chips" role="group" aria-label="Nach Status filtern">
+      @for (t of tabs; track t.key) {
+        <button type="button" class="chip" [class.on]="tab() === t.key" [attr.aria-pressed]="tab() === t.key" (click)="pickTab(t.key)">
+          {{ t.label }} <span class="n">{{ counts()?.[t.key] ?? '' }}</span>
+        </button>
+      }
+    </div>
+
+    @if (selection().size > 0) {
+      <div class="selbar" role="toolbar" aria-label="Auswahl">
+        <span class="selbar-count" role="status">{{ selection().size }} ausgewählt</span>
+        <app-button variant="text" (click)="openHide('selection')"><app-symbol name="visibility_off" [size]="18" />Ausblenden</app-button>
+        <app-button variant="text" (click)="deleteFor.set('selection')"><span class="text-danger" style="display: inline-flex; gap: 8px; align-items: center"><app-icon name="trash" [size]="18" />Löschen</span></app-button>
+        <button class="icbtn" type="button" aria-label="Auswahl aufheben" (click)="clearSelection()"><app-icon name="x" [size]="18" /></button>
+      </div>
+    }
+
+    @if (loaded() && !items().length) {
+      <div class="es">
+        <span class="done-ic"><app-symbol name="done_all" [size]="28" /></span>
+        <h2>{{ tab() === 'review' ? 'Nichts zu prüfen' : 'Keine Anfragen' }}</h2>
+        <p>{{ tab() === 'review' ? 'Alle Meldungen sind bearbeitet.' : 'In dieser Ansicht gibt es gerade nichts.' }}</p>
+      </div>
+    } @else {
+      <div class="list">
+        @for (r of items(); track r.id) {
+          <a class="li" [class.on]="r.id === selectedId()" [attr.aria-current]="r.id === selectedId() ? 'true' : null" [routerLink]="['/admin/moderation', r.id]" style="padding-left: 14px">
+            <button
+              type="button"
+              class="cbx"
+              [class.on]="selection().has(r.id)"
+              role="checkbox"
+              [attr.aria-checked]="selection().has(r.id)"
+              [attr.aria-label]="'Auswählen: ' + r.title"
+              (click)="toggle(r.id, $event)"
+            >
+              @if (selection().has(r.id)) { <app-icon name="check" [size]="14" [strokeWidth]="2.4" /> }
+            </button>
+            <span class="tile"><app-symbol [name]="iconFor(r.sport)" [fill]="r.id === selectedId()" /></span>
+            <span class="li-body">
+              <span class="li-title ell" [title]="r.title">{{ r.title }}</span>
+              <span class="li-sub ell">
+                <span class="st" [class]="st[r.status].cls">{{ st[r.status].label }}@if (r.openReports) { · {{ plural(r.openReports, 'Meldung', 'Meldungen') }} }</span>
+                · {{ r.sport }}
+              </span>
+            </span>
+            <span class="li-trail">{{ ago(r.createdAt) }}</span>
+          </a>
+        }
+      </div>
+    }
+  </section>
+
+  @if (detail(); as d) {
+    <article class="ld-detail sheet" aria-labelledby="dt">
+      <div class="sheet-bar">
+        @if (phone()) {
+          <a class="icbtn" routerLink="/admin/moderation" aria-label="Zurück zur Liste" style="margin-left: -8px"><app-icon name="left" [size]="20" /></a>
+        }
+        <span class="kicker"><span class="st" [class]="st[d.status].cls">{{ st[d.status].label }}</span></span>
+        @if (d.status === 'online') {
+          <a class="icbtn" [routerLink]="['/anfrage', d.id]" target="_blank" aria-label="Öffentliche Ansicht öffnen" title="Öffentliche Ansicht öffnen"><app-icon name="ext" [size]="19" /></a>
+        }
+      </div>
+      <div style="display: flex; gap: 16px; align-items: flex-start; margin-top: -8px">
+        <span class="tile tile--lg"><app-symbol [name]="iconFor(d.sport)" [size]="26" [fill]="true" /></span>
+        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+          <h2 class="sheet-title" id="dt">{{ d.title }}</h2>
+          <p class="muted">{{ d.sport }} · {{ d.knowledgeLevel ?? 'Alle Niveaus' }}</p>
+        </div>
+      </div>
+
+      @if (d.status === 'hidden' && d.hiddenReason) {
+        <div class="note"><app-symbol name="visibility_off" [size]="18" /><span>Ausgeblendet: {{ d.hiddenReason }}</span></div>
+      }
+      @if (d.pendingReview && d.status === 'review') {
+        <div class="note note--warn"><app-symbol name="hourglass_empty" [size]="18" /><span>Neue Anfrage, wartet auf Freigabe.</span></div>
+      }
+
+      @if (d.openReports > 0) {
+        <section style="display: flex; flex-direction: column; gap: 8px" aria-labelledby="rp">
+          <h3 class="sec sec--danger" id="rp">{{ reportTitle(d) }}</h3>
+          <div class="rowgroup">
+            @for (m of openReports(d); track m.id) {
+              <div class="fld-row fld-row--top">
+                <app-symbol class="fld-ic" name="flag" style="margin-top: 2px" />
+                <span class="fld-text">
+                  <span class="fld-value" style="font-weight: 500">{{ m.reason }}</span>
+                  <span class="fld-label">{{ m.comment ? '„' + m.comment + '“' : 'Ohne Kommentar' }}</span>
+                </span>
+                <time class="li-trail">{{ agoTime(m.createdAt) }}</time>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <section style="display: flex; flex-direction: column; gap: 8px" aria-labelledby="ds">
+        <h3 class="sec" id="ds">Beschreibung</h3>
+        <p class="prose">{{ d.description }}</p>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px">
+        <section style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 8px" aria-labelledby="dd">
+          <h3 class="sec" id="dd">Details</h3>
+          <div class="rowgroup">
+            <div class="fld-row"><app-icon class="fld-ic" name="mail" [size]="20" /><span class="fld-text"><span class="fld-label">Erstellt von (nur für Admins sichtbar)</span><span class="fld-value" style="font-size: 14px">{{ d.contactEmail }}</span></span></div>
+            <div class="fld-row"><app-symbol class="fld-ic" name="calendar_today" /><span class="fld-text"><span class="fld-label">Erstellt</span><span class="fld-value num">{{ created(d) }}</span></span></div>
+            <div class="fld-row"><app-symbol class="fld-ic" name="schedule" /><span class="fld-text"><span class="fld-label">Läuft ab</span><span class="fld-value num">{{ expires(d) }}</span></span></div>
+            @if (d.gender || d.age) {
+              <div class="fld-row"><app-icon class="fld-ic" name="user" [size]="20" /><span class="fld-text"><span class="fld-label">Über die Person</span><span class="fld-value">{{ person(d) }}</span></span></div>
+            }
+          </div>
+        </section>
+        <section style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 8px" aria-labelledby="hs">
+          <h3 class="sec" id="hs">Verlauf</h3>
+          <ol class="hist">
+            @for (h of history(); track h.id) {
+              <li><app-symbol [name]="h.icon" [size]="18" /><span>{{ h.text }}</span><time>{{ h.when }}</time></li>
+            }
+          </ol>
+        </section>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: 4px">
+        <app-button variant="danger" [loading]="busy() === 'delete'" (click)="deleteFor.set('detail')" style="margin-right: auto"><app-icon name="trash" [size]="18" />Löschen</app-button>
+        @if (d.status === 'review') {
+          <app-button variant="outlined" [loading]="busy() === 'approve'" (click)="approve()">
+            <app-symbol name="done_all" [size]="18" />{{ d.openReports > 0 ? 'Meldungen verwerfen' : 'Freigeben' }}
+          </app-button>
+        }
+        @switch (d.status) {
+          @case ('hidden') {
+            <app-button variant="fill" [loading]="busy() === 'unhide'" (click)="unhide()"><app-symbol name="visibility" [size]="18" />Wieder einblenden</app-button>
+          }
+          @case ('unverified') {
+            <app-button variant="fill" [loading]="busy() === 'resend'" (click)="resend()"><app-symbol name="forward_to_inbox" [size]="18" />Bestätigungs-E-Mail erneut senden</app-button>
+          }
+          @default {
+            <app-button variant="fill" (click)="openHide('detail')"><app-symbol name="visibility_off" [size]="18" />Ausblenden</app-button>
+          }
+        }
+      </div>
+    </article>
+  } @else if (loaded() && items().length && !phone()) {
+    <div class="ld-detail"></div>
+  }
+</main>
+
+<app-dialog
+  [open]="hideFor() !== null"
+  [title]="hideFor() === 'selection' ? plural(selection().size, 'Anfrage', 'Anfragen') + ' ausblenden' : 'Anfrage ausblenden'"
+  [subtitle]="hideFor() === 'detail' ? (detail()?.title ?? '') : ''"
+  (closed)="hideFor.set(null)"
+>
+  <p class="muted">Die Anfrage verschwindet aus der öffentlichen Liste. Du kannst sie jederzeit wieder einblenden.</p>
+  <fieldset class="plain">
+    <legend class="sec">Grund</legend>
+    <div class="chips" role="radiogroup" aria-label="Grund">
+      @for (r of hideReasons; track r) {
+        <button type="button" class="chip" role="radio" [class.on]="hideReason === r" [attr.aria-checked]="hideReason === r" (click)="hideReason = r">
+          @if (hideReason === r) { <app-icon name="check" [size]="15" /> }
+          {{ r }}
+        </button>
+      }
+    </div>
+  </fieldset>
+  @if (hideFor() === 'detail') {
+    <div class="tf">
+      <div class="tf__box tf__box--area">
+        <label class="tf__label" for="hide-msg">Nachricht an Ersteller:in <span class="opt">· optional</span></label>
+        <textarea id="hide-msg" class="tf__control" style="min-height: 104px" maxlength="2000" [(ngModel)]="hideMessage"></textarea>
+      </div>
+    </div>
+    <app-checkbox [(ngModel)]="hideNotify">Ersteller:in per E-Mail informieren</app-checkbox>
+  }
+  <div dialog-footer style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap">
+    <app-button variant="text" (click)="hideFor.set(null)">Abbrechen</app-button>
+    <app-button variant="fill" (click)="confirmHide()"><app-symbol name="visibility_off" [size]="18" />Ausblenden</app-button>
+  </div>
+</app-dialog>
+
+<app-dialog
+  [open]="deleteFor() !== null"
+  [title]="deleteFor() === 'selection' ? plural(selection().size, 'Anfrage', 'Anfragen') + ' löschen?' : 'Anfrage löschen?'"
+  (closed)="deleteFor.set(null)"
+>
+  <p class="muted">
+    @if (deleteFor() === 'detail') { „{{ detail()?.title }}“ wird mit allen Meldungen endgültig gelöscht. }
+    @else { Die ausgewählten Anfragen werden mit allen Meldungen endgültig gelöscht. }
+    Ausblenden lässt sich dagegen rückgängig machen.
+  </p>
+  <div class="note note--warn"><app-symbol name="warning" [size]="18" /><span>Das lässt sich nicht rückgängig machen.</span></div>
+  <div dialog-footer style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap">
+    <app-button variant="text" (click)="deleteFor.set(null)">Abbrechen</app-button>
+    <app-button variant="danger" (click)="confirmDelete()"><app-icon name="trash" [size]="17" />Endgültig löschen</app-button>
+  </div>
+</app-dialog>

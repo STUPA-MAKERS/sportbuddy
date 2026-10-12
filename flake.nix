@@ -1,6 +1,8 @@
 {
   description = "SportBuddy — NestJS backend + Angular frontend monorepo";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+  # The frontend compiles the STUPA ui-kit from the git submodule frontend/vendor/ui-kit.
+  inputs.self.submodules = true;
   outputs = { self, nixpkgs }:
     let
       system = "x86_64-linux";
@@ -12,7 +14,7 @@
         version = "1.0.0";
         src = ./backend;
         inherit nodejs;
-        npmDepsHash = "sha256-dEz4+czwjuG0Yhu3cqtkemZK3+7UMnJktM24ZcMZw+I=";
+        npmDepsHash = "sha256-tHPgNjaUM4LWvNe9MvOnrh93pHzc4tMUnJmaUd/Pqyo=";
         npmBuildScript = "build";
         CI = "true";
         # NestJS "nest build" emits compiled JS into dist/. Runtime email
@@ -32,7 +34,7 @@
         version = "0.0.0";
         src = ./frontend;
         inherit nodejs;
-        npmDepsHash = "sha256-vxJZgdaXcr44PsHwj7qpEMVBCPyqwT8PxQXD9bk6BLI=";
+        npmDepsHash = "sha256-W3fq6C6/3L25WSiVPcH89IjQTEWxPmwbzSSs34unQhQ=";
         npmBuildScript = "build";
         # Angular CLI otherwise prompts for analytics consent and hangs.
         env.NG_CLI_ANALYTICS = "false";

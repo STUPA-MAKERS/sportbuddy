@@ -1,0 +1,145 @@
+<article aria-labelledby="dt" style="display: contents">
+  <div class="sheet-bar">
+    @if (phone()) {
+      <button class="icbtn" type="button" aria-label="Zurück zur Liste" (click)="closed.emit()" style="margin-left: -8px">
+        <app-icon name="left" [size]="20" />
+      </button>
+    }
+    <span class="kicker">{{ request().sport }}</span>
+    <button class="icbtn" type="button" aria-label="Anfrage melden" title="Anfrage melden" (click)="openReport()">
+      <app-symbol name="flag" [size]="19" />
+    </button>
+    <button class="icbtn" type="button" aria-label="Link kopieren" title="Link kopieren" (click)="copyLink()">
+      <app-icon name="link" [size]="19" />
+    </button>
+    @if (!phone()) {
+      <button class="icbtn" type="button" aria-label="Schließen" title="Schließen" (click)="closed.emit()">
+        <app-icon name="x" [size]="19" />
+      </button>
+    }
+  </div>
+
+  <div style="display: flex; gap: 16px; align-items: flex-start; margin-top: -8px">
+    <span class="tile tile--lg"><app-symbol [name]="icon()" [size]="26" [fill]="true" /></span>
+    <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+      <h2 class="sheet-title" id="dt">{{ request().title }}</h2>
+      <p class="muted num">
+        Erstellt am {{ created() }}
+        @if (left() !== null) { · noch {{ left() }} {{ left() === 1 ? 'Tag' : 'Tage' }} online }
+      </p>
+    </div>
+  </div>
+
+  <p class="prose" style="max-width: 680px">{{ request().description }}</p>
+
+  @if (facts().length) {
+    <div class="facts">
+      @for (f of facts(); track f.label) {
+        <div class="fld-row"><span class="fld-text"><span class="fld-label">{{ f.label }}</span><span class="fld-value">{{ f.value }}</span></span></div>
+      }
+    </div>
+  }
+
+  <hr class="hr" />
+
+  @if (sent(); as s) {
+    <section style="display: flex; flex-direction: column; gap: 14px" aria-labelledby="ok">
+      <h3 class="sec">Antworten</h3>
+      <div class="note note--ok" role="status">
+        <app-icon name="check" [size]="20" />
+        <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <strong id="ok" style="font-weight: 600">Nachricht gesendet</strong>
+          <span style="overflow-wrap: anywhere">Die Person hat deine Nachricht per E-Mail bekommen und antwortet dir an {{ s.email }}.</span>
+        </div>
+      </div>
+      <div class="rowgroup">
+        <div class="fld-row"><span class="fld-text"><span class="fld-label">Deine Nachricht</span><span class="fld-value muted" style="font-size: 14px; line-height: 20px; white-space: pre-line">{{ s.message }}</span></span></div>
+      </div>
+      <div class="actions" style="margin-top: 0">
+        <a class="btnlink btnlink--tonal" routerLink="/"><app-icon name="left" [size]="18" />Weitere Anfragen ansehen</a>
+      </div>
+    </section>
+  } @else if (phone()) {
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h3 class="sec">Antworten</h3>
+      <p class="muted">Deine Nachricht geht per E-Mail an die Person hinter der Anfrage.</p>
+      <app-button variant="fill" size="lg" [block]="true" (click)="replyOpen.set(true)">
+        <app-icon name="send" [size]="18" />Antworten
+      </app-button>
+    </div>
+    <app-dialog [open]="replyOpen()" title="Antworten" subtitle="Geht per E-Mail an die Person hinter der Anfrage." (closed)="replyOpen.set(false)">
+      <ng-container [ngTemplateOutlet]="replyFields" />
+    </app-dialog>
+  } @else {
+    <section style="display: flex; flex-direction: column; gap: 12px" aria-labelledby="rp">
+      <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px">
+        <h3 class="sec" id="rp">Antworten</h3>
+        <p class="muted">Deine Nachricht geht per E-Mail an die Person hinter der Anfrage. Sie antwortet dir direkt an deine Adresse.</p>
+      </div>
+      <ng-container [ngTemplateOutlet]="replyFields" />
+    </section>
+  }
+</article>
+
+<ng-template #replyFields>
+  <form [formGroup]="replyForm" (ngSubmit)="send()" novalidate style="display: flex; flex-direction: column; gap: 12px">
+    <div class="grid2">
+      <app-input label="Name" formControlName="name" [required]="true" [error]="err('name')" autocomplete="name" />
+      <app-input label="E-Mail" type="email" formControlName="email" [required]="true" [error]="err('email')" />
+    </div>
+    <div class="tf">
+      <div class="tf__box tf__box--area" [class.tf__box--invalid]="!!err('message')">
+        <label class="tf__label" for="reply-msg">Nachricht</label>
+        <textarea id="reply-msg" class="tf__control" formControlName="message" placeholder="Hallo! Ich hätte Lust und Zeit …" maxlength="5000"></textarea>
+      </div>
+      @if (err('message')) { <p class="tf__msg tf__msg--err" role="alert">{{ err('message') }}</p> }
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+      <app-altcha formControlName="altchaPayload" style="flex: 1 1 260px; min-width: 0" />
+      <app-button variant="fill" size="lg" type="submit" [loading]="sending()" [block]="phone()">
+        <app-icon name="send" [size]="18" />Nachricht senden
+      </app-button>
+    </div>
+    @if (replyError()) {
+      <div class="note note--err" role="alert"><app-symbol name="warning" [size]="18" /><span>{{ replyError() }}</span></div>
+    }
+  </form>
+</ng-template>
+
+<app-dialog [open]="reportOpen()" title="Anfrage melden" [subtitle]="request().title" (closed)="reportOpen.set(false)">
+  <form [formGroup]="reportForm" (ngSubmit)="submitReport()" novalidate style="display: flex; flex-direction: column; gap: 16px">
+    <p class="muted">Passt die Anfrage nicht zu Sportbuddy? Das STUPA-Team prüft deine Meldung. Wer sie erstellt hat, erfährt nicht, dass du sie gemeldet hast.</p>
+    <fieldset class="plain">
+      <legend class="sec">Grund</legend>
+      <div class="chips" role="radiogroup" aria-label="Grund">
+        @for (r of reasons; track r) {
+          <button
+            type="button"
+            class="chip"
+            role="radio"
+            [class.on]="reportForm.controls.reason.value === r"
+            [attr.aria-checked]="reportForm.controls.reason.value === r"
+            (click)="reportForm.controls.reason.setValue(r)"
+          >
+            @if (reportForm.controls.reason.value === r) { <app-icon name="check" [size]="15" /> }
+            {{ r }}
+          </button>
+        }
+      </div>
+    </fieldset>
+    <div class="tf">
+      <div class="tf__box tf__box--area">
+        <label class="tf__label" for="report-comment">Kommentar <span class="opt">· optional</span></label>
+        <textarea id="report-comment" class="tf__control" formControlName="comment" maxlength="1000" style="min-height: 96px"></textarea>
+      </div>
+    </div>
+    <app-altcha formControlName="altchaPayload" />
+    @if (reportError()) {
+      <div class="note note--err" role="alert"><app-symbol name="warning" [size]="18" /><span>{{ reportError() }}</span></div>
+    }
+  </form>
+  <div dialog-footer style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap">
+    <app-button variant="text" (click)="reportOpen.set(false)">Abbrechen</app-button>
+    <app-button variant="fill" [loading]="reporting()" (click)="submitReport()"><app-symbol name="flag" [size]="18" />Melden</app-button>
+  </div>
+</app-dialog>

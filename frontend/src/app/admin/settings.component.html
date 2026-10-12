@@ -1,0 +1,152 @@
+<main style="padding: 32px 28px 40px 4px; min-width: 0">
+  <div style="max-width: 1180px; display: flex; flex-direction: column; gap: 20px">
+    <header style="padding: 0 4px">
+      <h1 class="ph-title">Einstellungen</h1>
+      <p class="ph-sub">Gilt sofort für die öffentliche Seite.</p>
+    </header>
+    <div class="cols">
+      <section class="sheet" style="flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 20px 24px 24px" aria-labelledby="sa">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <h2 class="sec" id="sa" style="flex: 1 1 auto">Sportarten</h2>
+          <app-button variant="tonal" size="sm" (click)="newSport()"><app-symbol name="add" [size]="17" />Sportart hinzufügen</app-button>
+        </div>
+        <div class="rowgroup">
+          @for (s of sports(); track s.id; let i = $index; let first = $first; let last = $last) {
+            <div
+              class="fld-row"
+              style="min-height: 52px; padding: 6px 8px 6px 4px; gap: 12px"
+              [class.inactive]="!s.active"
+              [class.dragging]="dragId() === s.id"
+              [class.drop]="overId() === s.id && dragId() !== s.id"
+              draggable="true"
+              (dragstart)="onDragStart(s.id, $event)"
+              (dragover)="onDragOver(s.id, $event)"
+              (drop)="onDrop(s.id, $event)"
+              (dragend)="onDragEnd()"
+            >
+              <span class="drag" aria-hidden="true"><app-symbol name="drag_indicator" /></span>
+              <span class="tile tile--sm"><app-symbol [name]="s.icon" [size]="18" /></span>
+              <span class="fld-text"><span class="fld-value ell" style="font-size: 14px">{{ s.name }}</span></span>
+              <span class="li-trail">{{ s.active ? s.requests + ' aktiv' : 'Ausgeblendet' }}</span>
+              <button class="icbtn icbtn--sm" type="button" [disabled]="first" [attr.aria-label]="s.name + ' nach oben'" (click)="move(i, -1)"><app-icon name="chevron-up" [size]="16" /></button>
+              <button class="icbtn icbtn--sm" type="button" [disabled]="last" [attr.aria-label]="s.name + ' nach unten'" (click)="move(i, 1)"><app-icon name="chevron-down" [size]="16" /></button>
+              <button class="icbtn" type="button" style="width: 36px; height: 36px" [attr.aria-label]="s.name + ' bearbeiten'" (click)="editSport(s)"><app-icon name="edit" [size]="18" /></button>
+            </div>
+          }
+        </div>
+        <p class="subtle">Ziehen oder die Pfeile nutzen zum Sortieren. Eine Sportart mit Anfragen lässt sich nur ausblenden, nicht löschen.</p>
+      </section>
+
+      <div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+        <section class="sheet" style="display: flex; flex-direction: column; gap: 12px; padding: 20px 24px 24px" aria-labelledby="an">
+          <h2 class="sec" id="an">Anfragen</h2>
+          @if (settings(); as s) {
+            <div class="grid2">
+              <div class="tf">
+                <div class="tf__box">
+                  <label class="tf__label" for="lz">Laufzeit in Tagen</label>
+                  <input id="lz" class="tf__control" type="number" min="1" max="365" [(ngModel)]="runtimeDays" (change)="saveNumbers()" />
+                </div>
+                <p class="tf__msg">Gilt für neue und verlängerte Anfragen.</p>
+              </div>
+              <div class="tf">
+                <div class="tf__box">
+                  <label class="tf__label" for="mg">Automatisch ausblenden ab</label>
+                  <input id="mg" class="tf__control" type="number" min="0" max="50" [(ngModel)]="autoHideThreshold" (change)="saveNumbers()" />
+                </div>
+                <p class="tf__msg">Offene Meldungen. 0 schaltet das aus.</p>
+              </div>
+            </div>
+            <div class="rowgroup">
+              <div class="fld-row">
+                <span class="fld-text">
+                  <span class="fld-value" style="font-size: 14px; font-weight: 500">Neue Anfragen vor Veröffentlichung prüfen</span>
+                  <span class="fld-label">Bestätigte Anfragen landen erst unter „Zu prüfen“.</span>
+                </span>
+                <app-switch ariaLabel="Neue Anfragen vor Veröffentlichung prüfen" [checked]="s.reviewBeforePublish" (checkedChange)="toggle('reviewBeforePublish', $event)" />
+              </div>
+              <div class="fld-row">
+                <span class="fld-text">
+                  <span class="fld-value" style="font-size: 14px; font-weight: 500">E-Mail an Moderation bei neuer Meldung</span>
+                  <span class="fld-label">
+                    @if (s.moderationEmail) { Geht an {{ s.moderationEmail }}. }
+                    @else { Dafür MODERATION_EMAIL auf dem Server setzen. }
+                  </span>
+                </span>
+                <app-switch ariaLabel="E-Mail an Moderation bei neuer Meldung" [checked]="s.notifyOnReport && !!s.moderationEmail" [disabled]="!s.moderationEmail" (checkedChange)="toggle('notifyOnReport', $event)" />
+              </div>
+            </div>
+            <p class="subtle">Zugriff auf die Verwaltung hat die Gruppe <span class="code-chip">{{ s.adminGroup }}</span> (OIDC_ADMIN_GROUP).</p>
+          }
+        </section>
+
+        <section class="sheet" style="display: flex; flex-direction: column; gap: 12px; padding: 20px 24px 24px" aria-labelledby="gs">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <h2 class="sec" id="gs" style="flex: 1 1 auto">Gesperrte E-Mail-Adressen</h2>
+            <app-button variant="tonal" size="sm" (click)="openBlock()"><app-symbol name="add" [size]="17" />Sperren</app-button>
+          </div>
+          @if (blocked().length) {
+            <div class="rowgroup">
+              @for (b of blocked(); track b.id) {
+                <div class="fld-row">
+                  <app-symbol class="fld-ic" name="block" />
+                  <span class="fld-text">
+                    <span class="fld-value" style="font-size: 14px">{{ b.pattern }}</span>
+                    <span class="fld-label">{{ b.reason ? b.reason + ' · ' : '' }}seit {{ shortDate(b.createdAt) }}</span>
+                  </span>
+                  <button class="icbtn" type="button" [attr.aria-label]="'Sperre für ' + b.pattern + ' aufheben'" (click)="unblock(b)"><app-icon name="x" [size]="18" /></button>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="muted">Keine Adresse gesperrt. Gesperrte Adressen können keine Anfragen erstellen und nicht antworten.</p>
+          }
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<app-dialog [open]="sportDraft() !== null" [title]="sportDraft()?.id === null ? 'Sportart hinzufügen' : 'Sportart bearbeiten'" (closed)="sportDraft.set(null)">
+  @if (sportDraft(); as d) {
+    <app-input label="Name" [ngModel]="d.name" (ngModelChange)="patchDraft({ name: $event })" [required]="true" />
+    <fieldset class="plain">
+      <legend class="sec">Symbol</legend>
+      <div class="icons" role="radiogroup" aria-label="Symbol">
+        @for (icon of icons; track icon) {
+          <button type="button" role="radio" [class.on]="d.icon === icon" [attr.aria-checked]="d.icon === icon" [attr.aria-label]="icon" [title]="icon" (click)="patchDraft({ icon })">
+            <app-symbol [name]="icon" [fill]="d.icon === icon" />
+          </button>
+        }
+      </div>
+    </fieldset>
+    @if (d.id !== null) {
+      <div class="rowgroup">
+        <div class="fld-row">
+          <span class="fld-text">
+            <span class="fld-value" style="font-size: 14px; font-weight: 500">Für neue Anfragen anbieten</span>
+            <span class="fld-label">Ausgeblendet erscheint sie nicht mehr als Filter und im Formular.</span>
+          </span>
+          <app-switch ariaLabel="Für neue Anfragen anbieten" [checked]="d.active" (checkedChange)="patchDraft({ active: $event })" />
+        </div>
+      </div>
+    }
+  }
+  <div dialog-footer style="display: flex; gap: 8px; flex-wrap: wrap; width: 100%">
+    @if (sportDraft()?.id !== null && sportDraft()?.requests === 0) {
+      <app-button variant="danger" (click)="deleteSport()" style="margin-right: auto"><app-icon name="trash" [size]="17" />Löschen</app-button>
+    }
+    <span style="flex: 1 1 auto"></span>
+    <app-button variant="text" (click)="sportDraft.set(null)">Abbrechen</app-button>
+    <app-button variant="fill" [disabled]="!sportDraft()?.name?.trim()" (click)="saveSport()"><app-icon name="check" [size]="18" />Speichern</app-button>
+  </div>
+</app-dialog>
+
+<app-dialog [open]="blockOpen()" title="E-Mail-Adresse sperren" subtitle="Eine Adresse oder eine ganze Domain wie *@wegwerfmail.de." (closed)="blockOpen.set(false)">
+  <app-input label="Adresse oder *@domain" [(ngModel)]="blockPattern" [error]="blockError()" [required]="true" />
+  <app-input label="Grund · optional" [(ngModel)]="blockReason" />
+  <div dialog-footer style="display: flex; justify-content: flex-end; gap: 8px">
+    <app-button variant="text" (click)="blockOpen.set(false)">Abbrechen</app-button>
+    <app-button variant="fill" (click)="block()"><app-symbol name="block" [size]="18" />Sperren</app-button>
+  </div>
+</app-dialog>

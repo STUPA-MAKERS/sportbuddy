@@ -1,0 +1,126 @@
+@switch (state()) {
+  @case ('loading') {
+    <div class="center-main"><p class="muted" aria-busy="true">Deine Anfrage wird geladen …</p></div>
+  }
+  @case ('error') {
+    <div class="center-main">
+      <article class="done done--sm" aria-labelledby="er">
+        <span class="done-ic done-ic--err"><app-symbol name="warning" [size]="30" /></span>
+        <span class="st st--err">Fehler</span>
+        <h1 id="er">Dieser Link funktioniert nicht mehr</h1>
+        <p class="lead">Vielleicht wurde die Anfrage schon gelöscht oder ist abgelaufen.</p>
+        <div class="actions">
+          <a class="btnlink btnlink--outlined" routerLink="/">Zur Übersicht</a>
+          <a class="btnlink btnlink--text" routerLink="/erstellen">Neue Anfrage</a>
+        </div>
+      </article>
+    </div>
+  }
+  @case ('deleted') {
+    <div class="center-main">
+      <article class="done" aria-labelledby="del">
+        <span class="done-ic"><app-icon name="check" [size]="30" /></span>
+        <h1 id="del">Deine Anfrage ist gelöscht</h1>
+        <p class="lead">Sie ist aus der Liste verschwunden. Bereits verschickte Antworten bleiben in deinem Postfach.</p>
+        <div class="actions">
+          <a class="btnlink btnlink--outlined" routerLink="/">Zur Übersicht</a>
+          <a class="btnlink btnlink--text" routerLink="/erstellen">Neue Anfrage</a>
+        </div>
+      </article>
+    </div>
+  }
+  @case ('ok') {
+    @if (request(); as r) {
+      <div class="wiz">
+        <aside class="wiz-aside" style="max-width: 380px; flex-basis: 300px; gap: 16px">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 0 4px">
+            <h1 class="ph-title">Deine Anfrage</h1>
+            <p class="muted">Nur du hast diesen Link. Hier bearbeitest, verlängerst oder löschst du deine Anfrage.</p>
+          </div>
+          <div class="card">
+            <div style="display: flex; gap: 14px; align-items: center; min-width: 0">
+              <span class="tile"><app-symbol [name]="iconFor(r.sport)" /></span>
+              <span class="li-body">
+                <span class="li-title ell" [title]="r.title">{{ r.title }}</span>
+                <span class="li-sub ell">{{ r.sport }} · {{ r.knowledgeLevel ?? 'Alle Niveaus' }}</span>
+              </span>
+            </div>
+            <div class="rowgroup">
+              <div class="fld-row"><span class="fld-text"><span class="fld-label">Status</span><span class="fld-value st" [class]="status().cls">{{ status().label }}</span></span></div>
+              @if (r.hiddenReason) {
+                <div class="fld-row"><span class="fld-text"><span class="fld-label">Grund</span><span class="fld-value">{{ r.hiddenReason }}</span></span></div>
+              }
+              <div class="fld-row"><span class="fld-text"><span class="fld-label">Erstellt</span><span class="fld-value num">{{ created() }}</span></span></div>
+              <div class="fld-row"><span class="fld-text"><span class="fld-label">Online bis</span><span class="fld-value num">{{ expires() }}</span></span></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <app-button variant="tonal" [block]="true" [loading]="extending()" (click)="extend()">
+                <app-symbol name="schedule" [size]="18" />Um {{ r.runtimeDays }} Tage verlängern
+              </app-button>
+              @if (r.status === 'online') {
+                <app-button variant="text" [block]="true" (click)="openPublic()">Öffentlich ansehen<app-icon name="ext" [size]="16" /></app-button>
+              }
+            </div>
+          </div>
+          <div class="card" style="gap: 10px">
+            <h2 class="sec sec--danger">Löschen</h2>
+            <p class="muted">Die Anfrage verschwindet sofort aus der Liste. Das lässt sich nicht rückgängig machen.</p>
+            <div><app-button variant="danger" (click)="confirmDelete.set(true)"><app-icon name="trash" [size]="17" />Anfrage löschen</app-button></div>
+          </div>
+        </aside>
+
+        <section class="sheet wiz-sheet" style="gap: 20px" aria-labelledby="ed" [formGroup]="form">
+          <span class="kicker">Bearbeiten</span>
+          <h2 class="sheet-title" id="ed">Angaben ändern</h2>
+          <div class="grid2">
+            <div class="tf span2">
+              <div class="tf__box tf__box--count" [class.tf__box--invalid]="!!show('title')">
+                <label class="tf__label" for="m-title">Titel</label>
+                <input id="m-title" class="tf__control" formControlName="title" maxlength="160" />
+                <span class="tf__count">{{ titleLength() }} / 160</span>
+              </div>
+              @if (show('title')) { <p class="tf__msg tf__msg--err">{{ show('title') }}</p> }
+            </div>
+            <app-select label="Sportart" formControlName="sport" [options]="sportOptions()" />
+            <app-select label="Kenntnisstand" formControlName="knowledgeLevel" [options]="levelOptions" />
+            <div class="tf span2">
+              <div class="tf__box tf__box--area" [class.tf__box--invalid]="!!show('description')">
+                <label class="tf__label" for="m-desc">Beschreibung</label>
+                <textarea id="m-desc" class="tf__control" formControlName="description" maxlength="5000"></textarea>
+              </div>
+              @if (show('description')) { <p class="tf__msg tf__msg--err">{{ show('description') }}</p> }
+            </div>
+            <app-select label="Geschlecht · optional" formControlName="gender" [options]="genderOptions" />
+            <div class="tf">
+              <div class="tf__box" [class.tf__box--invalid]="!!show('age')">
+                <label class="tf__label" for="m-age">Alter <span class="opt">· optional</span></label>
+                <input id="m-age" class="tf__control" type="number" inputmode="numeric" min="1" max="120" formControlName="age" />
+              </div>
+              @if (show('age')) { <p class="tf__msg tf__msg--err">{{ show('age') }}</p> }
+            </div>
+          </div>
+          <div class="note">
+            <app-icon name="info" [size]="18" />
+            <span>Änderungen sind sofort sichtbar. Du bekommst eine Bestätigung per E-Mail.</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+            <span class="subtle" style="margin-right: auto">
+              @if (changes() === 0) { Alles gespeichert } @else { {{ changes() }} ungespeicherte {{ changes() === 1 ? 'Änderung' : 'Änderungen' }} }
+            </span>
+            <app-button variant="text" [disabled]="changes() === 0" (click)="discard()">Verwerfen</app-button>
+            <app-button variant="fill" [disabled]="changes() === 0" [loading]="saving()" (click)="save()"><app-icon name="check" [size]="18" />Speichern</app-button>
+          </div>
+        </section>
+      </div>
+
+      <app-dialog [open]="confirmDelete()" title="Anfrage löschen?" (closed)="confirmDelete.set(false)">
+        <p class="muted" style="font-size: 15px; line-height: 24px">„{{ r.title }}“ verschwindet sofort aus der Liste. Bereits verschickte Antworten bleiben in deinem Postfach.</p>
+        <div class="note note--warn"><app-symbol name="warning" [size]="18" /><span>Das lässt sich nicht rückgängig machen.</span></div>
+        <div dialog-footer style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap">
+          <app-button variant="text" (click)="confirmDelete.set(false)">Abbrechen</app-button>
+          <app-button variant="danger" [loading]="deleting()" (click)="remove()"><app-icon name="trash" [size]="17" />Endgültig löschen</app-button>
+        </div>
+      </app-dialog>
+    }
+  }
+}

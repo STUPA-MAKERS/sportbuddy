@@ -1,0 +1,9 @@
+<h1 style="margin:0 0 12px;font-size:22px;line-height:28px;font-weight:600;">Neue Meldung</h1>
+<p style="margin:0 0 16px;font-size:15px;line-height:24px;color:#4a504c;"><strong>{{requestTitle}}</strong> ({{requestSport}}) wurde gemeldet: <strong>{{reason}}</strong>.</p>
+{{#if comment}}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f2ef;border-radius:16px;margin:0 0 16px;">
+  <tr><td style="padding:16px;font-size:15px;line-height:24px;white-space:pre-wrap;">{{comment}}</td></tr>
+</table>
+{{/if}}
+<p style="margin:0 0 20px;font-size:14px;line-height:22px;color:#4a504c;">Offene Meldungen: {{openReports}}{{#if autoHidden}} · Die Anfrage wurde automatisch ausgeblendet.{{/if}}</p>
+<p style="margin:0;"><a href="{{adminUrl}}" style="display:inline-block;background:#72a384;color:#0b1d12;padding:12px 22px;border-radius:999px;font-weight:600;text-decoration:none;">In der Moderation öffnen</a></p>

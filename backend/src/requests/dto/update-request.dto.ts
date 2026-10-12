@@ -9,10 +9,11 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 import { GENDER_OPTIONS, KNOWLEDGE_LEVELS } from '../request-options.constants';
-import { PREDEFINED_SPORTS } from '../sports.constants';
 
+/** `null` clears an optional detail ("Egal" / "Keine Angabe"). */
 export class UpdateRequestDto {
   @IsOptional()
   @IsString()
@@ -23,7 +24,7 @@ export class UpdateRequestDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  @IsIn(PREDEFINED_SPORTS)
+  @MaxLength(80)
   sport?: string;
 
   @IsOptional()
@@ -33,20 +34,20 @@ export class UpdateRequestDto {
   @MaxLength(5000)
   description?: string;
 
-  @IsOptional()
+  @ValidateIf((_, v) => v !== null && v !== undefined)
   @IsString()
   @IsIn(KNOWLEDGE_LEVELS)
-  knowledgeLevel?: string;
+  knowledgeLevel?: string | null;
 
-  @IsOptional()
+  @ValidateIf((_, v) => v !== null && v !== undefined)
   @IsString()
   @IsIn(GENDER_OPTIONS)
-  gender?: string;
+  gender?: string | null;
 
-  @IsOptional()
+  @ValidateIf((_, v) => v !== null && v !== undefined)
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(120)
-  age?: number;
+  age?: number | null;
 }

@@ -3,128 +3,114 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
-  InternalServerErrorException,
+  HttpCode,
+  HttpException,
+  HttpStatus,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Post,
   Put,
   Query,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { verifySolution } from 'altcha-lib';
-import * as crypto from 'crypto';
+import { assertAltcha } from '../common/altcha';
+import { generateToken } from '../common/tokens';
 import { EmailService } from '../email/email.service';
+import { SettingsService } from '../settings/settings.service';
 import { CreateReplyDto } from './dto/create-reply.dto';
+import { CreateReportDto } from './dto/create-report.dto';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { RequestEntity } from './request.entity';
+import { toManaged, toPublic } from './request.mapper';
 import { RequestsService } from './requests.service';
 
-function generateToken(): string {
-  return crypto.randomBytes(24).toString('hex');
-}
-
-type PublicRequestResponse = Pick<
-  RequestEntity,
-  | 'id'
-  | 'title'
-  | 'sport'
-  | 'description'
-  | 'knowledgeLevel'
-  | 'gender'
-  | 'age'
-  | 'active'
-  | 'createdAt'
-  | 'updatedAt'
-  | 'expiresAt'
->;
-
-type ManagedRequestResponse = PublicRequestResponse &
-  Pick<RequestEntity, 'contactEmail' | 'editToken' | 'deleteToken'>;
+const RESEND_COOLDOWN_MS = 2 * 60 * 1000;
+const MAX_RESENDS = 5;
 
 @Controller('api/requests')
 export class RequestsController {
   constructor(
     private readonly service: RequestsService,
+    private readonly settings: SettingsService,
     private readonly emailService: EmailService,
-    private readonly configService: ConfigService,
+    private readonly config: ConfigService,
   ) {}
 
-  private getAltchaKey(): string {
-    const key = this.configService.get<string>('ALTCHA_HMAC_KEY');
-    if (!key) throw new InternalServerErrorException('ALTCHA_HMAC_KEY not configured');
-    return key;
+  private get frontendUrl() {
+    return this.config.get<string>('FRONTEND_URL', 'http://localhost:4200');
+  }
+
+  private async assertNotBlocked(email: string) {
+    if (await this.settings.isBlocked(email)) {
+      throw new ForbiddenException('Mit dieser E-Mail-Adresse sind keine Anfragen möglich.');
+    }
+  }
+
+  private async assertSport(sport: string) {
+    if (!(await this.settings.isActiveSport(sport))) {
+      throw new BadRequestException('Unbekannte Sportart.');
+    }
+  }
+
+  private async sendVerification(request: RequestEntity, runtimeDays: number) {
+    request.verificationSentAt = new Date();
+    await this.service.save(request);
+    return this.emailService.sendRequestCreatedEmail(request.contactEmail, {
+      requestTitle: request.title,
+      sport: request.sport,
+      knowledgeLevel: request.knowledgeLevel,
+      runtimeDays,
+      frontendUrl: this.frontendUrl,
+      verifyUrl: `${this.frontendUrl}/verify/${request.verifyToken}`,
+      manageUrl: `${this.frontendUrl}/manage/${request.editToken}`,
+    });
   }
 
   @Post()
-  async create(@Body() body: CreateRequestDto): Promise<PublicRequestResponse> {
-    const valid = await verifySolution(body.altchaPayload, this.getAltchaKey());
-    if (!valid) {
-      throw new BadRequestException('Altcha-Verifizierung fehlgeschlagen.');
-    }
-
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
-    const editToken = generateToken();
-    const deleteToken = generateToken();
-    const verifyToken = generateToken();
+  async create(@Body() body: CreateRequestDto) {
+    await assertAltcha(this.config, body.altchaPayload);
+    await this.assertSport(body.sport);
+    await this.assertNotBlocked(body.contactEmail);
+    const { runtimeDays } = await this.settings.get();
 
     const request = await this.service.create({
-      title: body.title,
+      title: body.title.trim(),
       sport: body.sport,
-      description: body.description,
-      contactEmail: body.contactEmail,
+      description: body.description.trim(),
+      contactEmail: body.contactEmail.trim(),
       knowledgeLevel: body.knowledgeLevel ?? null,
       gender: body.gender ?? null,
       age: body.age ?? null,
-      editToken,
-      deleteToken,
-      verifyToken,
+      editToken: generateToken(),
+      deleteToken: generateToken(),
+      verifyToken: generateToken(),
       active: false,
-      expiresAt,
+      expiresAt: new Date(Date.now() + runtimeDays * 86_400_000),
     });
-
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
-    await this.emailService.sendRequestCreatedEmail(body.contactEmail, {
-      requestTitle: body.title,
-      sportart: body.sport,
-      frontendUrl,
-      verifyUrl: `${frontendUrl}/verify/${verifyToken}`,
-      editUrl: `${frontendUrl}/edit/${editToken}`,
-      deleteUrl: `${frontendUrl}/delete/${deleteToken}`,
-    });
-
-    return this.toPublicResponse(request);
+    await this.sendVerification(request, runtimeDays);
+    return { ...toPublic(request), contactEmail: request.contactEmail };
   }
 
   @Get()
-  async list(@Query('sport') sport?: string, @Query('skip') skip?: string, @Query('take') take?: string) {
-    const rawTake = take ? parseInt(take, 10) : 20;
+  async list(
+    @Query('sport') sport?: string,
+    @Query('q') q?: string,
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+  ) {
+    const rawTake = take ? parseInt(take, 10) : 50;
     const rawSkip = skip ? parseInt(skip, 10) : 0;
-    const resolvedTake = Number.isFinite(rawTake) ? Math.min(Math.max(rawTake, 1), 100) : 20;
-    const resolvedSkip = Number.isFinite(rawSkip) ? Math.max(rawSkip, 0) : 0;
-
-    const requests = await this.service.findAll({ sport, skip: resolvedSkip, take: resolvedTake });
-    return requests.map((request) => this.toPublicResponse(request));
-  }
-
-  @Get('manage/:token')
-  async getByToken(@Param('token') token: string): Promise<ManagedRequestResponse> {
-    const request = await this.service.findByEditToken(token);
-    if (!request) {
-      throw new NotFoundException('Anfrage nicht gefunden.');
-    }
-    return this.toManagedResponse(request);
-  }
-
-  @Get('delete-confirm/:token')
-  async getDeleteConfirm(@Param('token') token: string): Promise<PublicRequestResponse> {
-    const request = await this.service.findByDeleteToken(token);
-    if (!request) {
-      throw new NotFoundException('Anfrage nicht gefunden.');
-    }
-    return this.toPublicResponse(request);
+    const { items, total } = await this.service.listPublic({
+      sport: sport || undefined,
+      q: q?.slice(0, 100),
+      take: Number.isFinite(rawTake) ? Math.min(Math.max(rawTake, 1), 100) : 50,
+      skip: Number.isFinite(rawSkip) ? Math.max(rawSkip, 0) : 0,
+    });
+    return { items: items.map(toPublic), total };
   }
 
   @Get('verify/:token')
@@ -132,100 +118,159 @@ export class RequestsController {
     if (!token || token.length < 10) {
       throw new BadRequestException('Ungültiger Verifikationstoken.');
     }
-    const request = await this.service.activateByVerifyToken(token);
+    const { reviewBeforePublish } = await this.settings.get();
+    const request = await this.service.verify(token, reviewBeforePublish);
     if (!request) {
       throw new NotFoundException('Verifikationslink ungültig oder bereits verwendet.');
     }
-    return { success: true, requestId: request.id };
+    return {
+      success: true,
+      requestId: request.id,
+      title: request.title,
+      sport: request.sport,
+      pendingReview: request.pendingReview,
+      expiresAt: request.expiresAt,
+    };
   }
 
-  @Get(':id')
-  async getPublicById(@Param('id') id: string): Promise<PublicRequestResponse> {
-    const request = await this.service.findPublicById(id);
-    if (!request) {
-      throw new NotFoundException('Anfrage nicht gefunden.');
+  // --- manage (token from the email) ----------------------------------------
+
+  private async byToken(token: string) {
+    const request = await this.service.findByManageToken(token);
+    if (!request) throw new NotFoundException('Anfrage nicht gefunden.');
+    return request;
+  }
+
+  @Get('manage/:token')
+  async getByToken(@Param('token') token: string) {
+    const request = await this.byToken(token);
+    const { runtimeDays } = await this.settings.get();
+    return { ...toManaged(request), runtimeDays };
+  }
+
+  @Put('manage/:token')
+  async updateByToken(@Param('token') token: string, @Body() updates: UpdateRequestDto) {
+    const request = await this.byToken(token);
+    if (updates.sport !== undefined && updates.sport !== request.sport) {
+      await this.assertSport(updates.sport);
     }
-    return this.toPublicResponse(request);
+    const saved = await this.service.update(request, {
+      ...(updates.title !== undefined && { title: updates.title.trim() }),
+      ...(updates.sport !== undefined && { sport: updates.sport }),
+      ...(updates.description !== undefined && { description: updates.description.trim() }),
+      ...(updates.knowledgeLevel !== undefined && { knowledgeLevel: updates.knowledgeLevel }),
+      ...(updates.gender !== undefined && { gender: updates.gender }),
+      ...(updates.age !== undefined && { age: updates.age }),
+    });
+    await this.emailService.sendRequestUpdatedEmail(saved.contactEmail, {
+      requestTitle: saved.title,
+      frontendUrl: this.frontendUrl,
+      manageUrl: `${this.frontendUrl}/manage/${saved.editToken}`,
+    });
+    const { runtimeDays } = await this.settings.get();
+    return { ...toManaged(saved), runtimeDays };
+  }
+
+  @Post('manage/:token/extend')
+  @HttpCode(200)
+  async extend(@Param('token') token: string) {
+    const request = await this.byToken(token);
+    const { runtimeDays } = await this.settings.get();
+    const saved = await this.service.extend(request, runtimeDays);
+    return { ...toManaged(saved), runtimeDays };
+  }
+
+  @Delete('manage/:token')
+  async deleteByToken(@Param('token') token: string) {
+    const request = await this.byToken(token);
+    await this.service.remove(request);
+    await this.emailService.sendRequestDeletedEmail(request.contactEmail, {
+      requestTitle: request.title,
+      frontendUrl: this.frontendUrl,
+    });
+    return { success: true };
+  }
+
+  // --- public by id --------------------------------------------------------
+
+  @Get(':id')
+  async getPublicById(@Param('id', ParseUUIDPipe) id: string) {
+    const request = await this.service.findPublicById(id);
+    if (!request) throw new NotFoundException('Anfrage nicht gefunden.');
+    return toPublic(request);
   }
 
   @Post(':id/replies')
-  async createReply(@Param('id') id: string, @Body() body: CreateReplyDto) {
+  async createReply(@Param('id', ParseUUIDPipe) id: string, @Body() body: CreateReplyDto) {
     const request = await this.service.findPublicById(id);
-    if (!request) {
-      throw new NotFoundException('Anfrage nicht gefunden.');
-    }
+    if (!request) throw new NotFoundException('Anfrage nicht gefunden.');
+    await assertAltcha(this.config, body.altchaPayload);
+    await this.assertNotBlocked(body.email);
 
-    const valid = await verifySolution(body.altchaPayload, this.getAltchaKey());
-    if (!valid) {
-      throw new BadRequestException('Altcha-Verifizierung fehlgeschlagen.');
-    }
-
-    await this.emailService.sendRequestReplyEmail(request.contactEmail, {
+    const sent = await this.emailService.sendRequestReplyEmail(request.contactEmail, {
       requestTitle: request.title,
       requestSport: request.sport,
       senderName: body.name,
       senderEmail: body.email,
       message: body.message,
+      frontendUrl: this.frontendUrl,
+      manageUrl: `${this.frontendUrl}/manage/${request.editToken}`,
     });
-
+    if (!sent) {
+      throw new HttpException('Die Nachricht konnte nicht gesendet werden.', HttpStatus.BAD_GATEWAY);
+    }
     return { success: true };
   }
 
-  @Put('manage/:token')
-  async updateByEditToken(
-    @Param('token') token: string,
-    @Body() updates: UpdateRequestDto,
-  ): Promise<ManagedRequestResponse> {
-    const request = await this.service.updateByEditToken(token, updates);
-    if (!request) {
-      throw new NotFoundException('Anfrage nicht gefunden.');
+  @Post(':id/reports')
+  @HttpCode(201)
+  async report(@Param('id', ParseUUIDPipe) id: string, @Body() body: CreateReportDto) {
+    const request = await this.service.findPublicById(id);
+    if (!request) throw new NotFoundException('Anfrage nicht gefunden.');
+    await assertAltcha(this.config, body.altchaPayload);
+
+    const settings = await this.settings.get();
+    const comment = body.comment?.trim() || null;
+    const { autoHidden, openReports } = await this.service.report(
+      request,
+      body.reason,
+      comment,
+      settings.autoHideThreshold,
+    );
+    const moderationEmail = this.config.get<string>('MODERATION_EMAIL');
+    if (settings.notifyOnReport && moderationEmail) {
+      await this.emailService.sendReportNotificationEmail(moderationEmail, {
+        requestTitle: request.title,
+        requestSport: request.sport,
+        reason: body.reason,
+        comment,
+        openReports,
+        autoHidden,
+        adminUrl: `${this.frontendUrl}/admin/moderation/${request.id}`,
+      });
     }
-
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
-    await this.emailService.sendRequestUpdatedEmail(request.contactEmail, {
-      requestTitle: request.title,
-      frontendUrl,
-      editUrl: `${frontendUrl}/edit/${request.editToken}`,
-      deleteUrl: `${frontendUrl}/delete/${request.deleteToken}`,
-    });
-
-    return this.toManagedResponse(request);
+    return { success: true };
   }
 
-  @Delete('manage/:token')
-  async deleteByDeleteToken(@Param('token') token: string) {
-    const request = await this.service.findByDeleteToken(token);
-    const success = await this.service.deleteByDeleteToken(token);
-
-    if (success && request) {
-      await this.emailService.sendRequestDeletedEmail(request.contactEmail, request.title);
+  /** "E-Mail erneut senden" on the done page. Rate limited, only before confirmation. */
+  @Post(':id/resend-verification')
+  @HttpCode(200)
+  async resendVerification(@Param('id', ParseUUIDPipe) id: string) {
+    const request = await this.service.findById(id);
+    if (!request || request.active || !request.verifyToken) {
+      throw new NotFoundException('Keine unbestätigte Anfrage gefunden.');
     }
-
-    return { success };
-  }
-
-  private toPublicResponse(request: RequestEntity): PublicRequestResponse {
-    return {
-      id: request.id,
-      title: request.title,
-      sport: request.sport,
-      description: request.description,
-      knowledgeLevel: request.knowledgeLevel,
-      gender: request.gender,
-      age: request.age,
-      active: request.active,
-      createdAt: request.createdAt,
-      updatedAt: request.updatedAt,
-      expiresAt: request.expiresAt,
-    };
-  }
-
-  private toManagedResponse(request: RequestEntity): ManagedRequestResponse {
-    return {
-      ...this.toPublicResponse(request),
-      contactEmail: request.contactEmail,
-      editToken: request.editToken,
-      deleteToken: request.deleteToken,
-    };
+    const last = request.verificationSentAt?.getTime() ?? 0;
+    if (request.verificationResends >= MAX_RESENDS || Date.now() - last < RESEND_COOLDOWN_MS) {
+      throw new HttpException(
+        'Bitte warte einen Moment, bevor du die E-Mail noch einmal anforderst.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    request.verificationResends += 1;
+    await this.service.log(request.id, 'verification-resent');
+    const { runtimeDays } = await this.settings.get();
+    await this.sendVerification(request, runtimeDays);
+    return { success: true };
   }
 }
