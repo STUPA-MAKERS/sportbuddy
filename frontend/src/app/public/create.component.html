@@ -1,0 +1,166 @@
+@if (done(); as d) {
+  <div class="center-main">
+    <article class="done" aria-labelledby="dn">
+      <span class="done-ic done-ic--warn"><app-icon name="mail" [size]="30" /></span>
+      <span class="st st--warn"><app-symbol name="schedule" [size]="15" />Noch nicht öffentlich</span>
+      <h1 id="dn">Bestätige deine E-Mail-Adresse</h1>
+      <p class="lead">
+        Wir haben einen Link an <strong>{{ d.email }}</strong> geschickt. Sobald du ihn öffnest, erscheint „{{ d.title }}“ in der Liste.
+      </p>
+      <div class="note" style="width: 100%">
+        <app-symbol name="key" [size]="18" />
+        <span>Heb die E-Mail auf. Sie enthält deinen persönlichen Link, mit dem du die Anfrage später bearbeitest oder löschst.</span>
+      </div>
+      <p class="subtle">Keine E-Mail da? Schau im Spam-Ordner nach.</p>
+      <div class="actions">
+        <a class="btnlink btnlink--outlined" routerLink="/">Zur Übersicht</a>
+        <app-button variant="text" [loading]="resendState() === 'sending'" [disabled]="resendState() === 'sent'" (click)="resend()">
+          {{ resendState() === 'sent' ? 'E-Mail gesendet' : 'E-Mail erneut senden' }}
+        </app-button>
+      </div>
+    </article>
+  </div>
+} @else {
+  <div class="wiz">
+    <aside class="wiz-aside">
+      <div style="display: flex; flex-direction: column; gap: 6px; padding: 0 10px">
+        <h1 class="ph-title">Anfrage erstellen</h1>
+        <p class="muted">Drei kurze Schritte. Deine Anfrage wird sichtbar, sobald du deine E-Mail-Adresse bestätigt hast.</p>
+      </div>
+      <app-stepper [steps]="steps()" [activeIndex]="step()" orientation="vertical" [navigable]="true" (stepSelect)="goTo($event)" />
+      <p class="subtle" style="display: flex; align-items: center; gap: 6px; padding: 0 14px">
+        <app-icon name="check" [size]="15" />Entwurf auf diesem Gerät gespeichert
+      </p>
+    </aside>
+
+    <section class="sheet wiz-sheet" aria-labelledby="st" [formGroup]="form">
+      <span class="kicker">Schritt {{ step() + 1 }} von 3</span>
+
+      @switch (step()) {
+        @case (0) {
+          <h2 class="sheet-title" id="st">Welche Sportart?</h2>
+          <div class="sports" role="radiogroup" aria-label="Sportart">
+            @for (s of api.sports(); track s.name) {
+              <button
+                type="button"
+                class="sport"
+                role="radio"
+                [class.on]="form.controls.sport.value === s.name"
+                [attr.aria-checked]="form.controls.sport.value === s.name"
+                (click)="pickSport(s.name)"
+                (dblclick)="pickSport(s.name); next()"
+              >
+                <span class="tile"><app-symbol [name]="s.icon" [fill]="form.controls.sport.value === s.name" /></span>
+                <span>{{ s.name }}</span>
+              </button>
+            }
+          </div>
+          @if (tried()[0] && form.controls.sport.invalid) {
+            <p class="tf__msg tf__msg--err" role="alert" style="padding: 0">Bitte wähle eine Sportart.</p>
+          }
+          <div class="note">
+            <app-icon name="info" [size]="18" />
+            <span>Deine Sportart fehlt? Wähle „Sonstige Sportarten“ und nenne sie im Titel.</span>
+          </div>
+        }
+        @case (1) {
+          <h2 class="sheet-title" id="st">Was suchst du?</h2>
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <div class="tf">
+              <div class="tf__box tf__box--count" [class.tf__box--invalid]="!!show('title')">
+                <label class="tf__label" for="c-title">Titel</label>
+                <input id="c-title" class="tf__control" formControlName="title" maxlength="160" autocomplete="off" />
+                <span class="tf__count">{{ titleLength() }} / 160</span>
+              </div>
+              <p class="tf__msg" [class.tf__msg--err]="!!show('title')">{{ show('title') || 'Kurz und konkret: Was, wann, wo.' }}</p>
+            </div>
+            <div class="tf">
+              <div class="tf__box tf__box--area" [class.tf__box--invalid]="!!show('description')">
+                <label class="tf__label" for="c-desc">Beschreibung</label>
+                <textarea id="c-desc" class="tf__control" formControlName="description" maxlength="5000"></textarea>
+              </div>
+              <p class="tf__msg" [class.tf__msg--err]="!!show('description')">
+                {{ show('description') || 'Mindestens 10 Zeichen. Keine Telefonnummer nötig, Antworten kommen per E-Mail.' }}
+              </p>
+            </div>
+          </div>
+          <fieldset class="plain">
+            <legend class="sec">Kenntnisstand</legend>
+            <app-segmented ariaLabel="Kenntnisstand" [options]="levelOptions" formControlName="knowledgeLevel" width="fill" size="control" />
+          </fieldset>
+          <fieldset class="plain">
+            <legend class="sec">Über dich <span class="opt">· optional</span></legend>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start">
+              <app-segmented style="flex: 3 1 360px; min-width: 0" ariaLabel="Geschlecht" [options]="genderOptions" formControlName="gender" width="fill" size="control" />
+              <div class="tf" style="flex: 1 1 120px">
+                <div class="tf__box" [class.tf__box--invalid]="!!show('age')">
+                  <label class="tf__label" for="c-age">Alter</label>
+                  <input id="c-age" class="tf__control" type="number" inputmode="numeric" min="1" max="120" formControlName="age" />
+                </div>
+                @if (show('age')) { <p class="tf__msg tf__msg--err">{{ show('age') }}</p> }
+              </div>
+            </div>
+            <div class="note">
+              <app-icon name="info" [size]="18" />
+              <span>Diese Angaben stehen öffentlich in deiner Anfrage. Lass sie leer, wenn sie für die Suche keine Rolle spielen.</span>
+            </div>
+          </fieldset>
+        }
+        @case (2) {
+          <h2 class="sheet-title" id="st">Kontakt &amp; Prüfen</h2>
+          <app-input
+            label="E-Mail-Adresse"
+            type="email"
+            formControlName="contactEmail"
+            [required]="true"
+            [error]="show('contactEmail')"
+            hint="Bleibt privat. Darüber kommen Antworten und dein Link zum Bearbeiten oder Löschen."
+          />
+          <section style="display: flex; flex-direction: column; gap: 10px" aria-labelledby="pv">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+              <h3 class="sec" id="pv">So erscheint deine Anfrage</h3>
+              <app-button variant="text" size="sm" (click)="step.set(1)"><app-icon name="edit" [size]="15" />Ändern</app-button>
+            </div>
+            <div class="preview">
+              <div style="display: flex; gap: 14px; align-items: center; min-width: 0">
+                <span class="tile"><app-symbol [name]="iconFor(form.controls.sport.value)" /></span>
+                <span class="li-body"><span class="li-title ell">{{ preview().title }}</span><span class="li-sub ell">{{ preview().sub }}</span></span>
+              </div>
+              <p class="muted" style="white-space: pre-line; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden">{{ preview().description }}</p>
+              @if (preview().badges.length) {
+                <div class="badges">
+                  @for (b of preview().badges; track b; let first = $first) {
+                    <span class="badge" [class.badge--acc]="first && !!form.controls.knowledgeLevel.value">{{ b }}</span>
+                  }
+                </div>
+              }
+            </div>
+          </section>
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <app-altcha formControlName="altchaPayload" />
+            <div class="note">
+              <app-symbol name="schedule" [size]="18" />
+              <span>Deine Anfrage ist {{ api.runtimeDays() }} Tage online und wird danach automatisch gelöscht.</span>
+            </div>
+            @if (error()) {
+              <div class="note note--err" role="alert"><app-symbol name="warning" [size]="18" /><span>{{ error() }}</span></div>
+            }
+          </div>
+        }
+      }
+
+      <div class="wiz-actions">
+        @if (step() === 0) {
+          <a class="btnlink btnlink--outlined" routerLink="/">Abbrechen</a>
+        } @else {
+          <app-button variant="outlined" (click)="back()"><app-icon name="left" [size]="18" />Zurück</app-button>
+        }
+        @if (step() < 2) {
+          <app-button variant="fill" (click)="next()">Weiter<app-icon name="right" [size]="18" /></app-button>
+        } @else {
+          <app-button variant="fill" [loading]="submitting()" (click)="submit()"><app-icon name="check" [size]="18" />Anfrage absenden</app-button>
+        }
+      </div>
+    </section>
+  </div>
+}

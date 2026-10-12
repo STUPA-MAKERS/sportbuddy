@@ -12,7 +12,6 @@ import {
   MinLength,
 } from 'class-validator';
 import { GENDER_OPTIONS, KNOWLEDGE_LEVELS } from '../request-options.constants';
-import { PREDEFINED_SPORTS } from '../sports.constants';
 
 export class CreateRequestDto {
   @IsString()
@@ -20,9 +19,10 @@ export class CreateRequestDto {
   @MaxLength(160)
   title: string;
 
+  /** Checked against the active sports in the controller. */
   @IsString()
   @IsNotEmpty()
-  @IsIn(PREDEFINED_SPORTS)
+  @MaxLength(80)
   sport: string;
 
   @IsString()
@@ -42,17 +42,17 @@ export class CreateRequestDto {
   @IsOptional()
   @IsString()
   @IsIn(KNOWLEDGE_LEVELS)
-  knowledgeLevel?: string;
+  knowledgeLevel?: string | null;
 
   @IsOptional()
   @IsString()
   @IsIn(GENDER_OPTIONS)
-  gender?: string;
+  gender?: string | null;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(120)
-  age?: number;
+  age?: number | null;
 }

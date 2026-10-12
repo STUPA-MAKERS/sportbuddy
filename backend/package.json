@@ -1,7 +1,7 @@
 {
   "name": "sportpartnerboerse-backend",
   "version": "1.0.0",
-  "description": "Backend für Sportpartnerbörse Hochschule Reutlingen",
+  "description": "Backend f\u00fcr Sportpartnerb\u00f6rse Hochschule Reutlingen",
   "author": "",
   "private": true,
   "license": "MIT",
@@ -26,20 +26,23 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/schedule": "^6.1.0",
     "@nestjs/typeorm": "^10.0.0",
+    "altcha-lib": "^1.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "cookie-parser": "^1.4.7",
     "handlebars": "^4.7.8",
     "nodemailer": "^6.9.7",
+    "openid-client": "^5.7.1",
     "pg": "^8.12.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "altcha-lib": "^1.0.0",
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
+    "@types/cookie-parser": "^1.4.10",
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.19.24",
@@ -69,7 +72,17 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)s$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "types": [
+              "node",
+              "jest"
+            ]
+          }
+        }
+      ]
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

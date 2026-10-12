@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
+import * as Handlebars from 'handlebars';
 import * as nodemailer from 'nodemailer';
 import * as path from 'path';
 
@@ -12,21 +13,24 @@ export interface EmailOptions {
 }
 
 export interface RequestCreatedEmailData {
-  recipientName?: string;
   requestTitle: string;
-  sportart: string;
+  sport: string;
+  knowledgeLevel?: string | null;
+  runtimeDays: number;
   frontendUrl: string;
   verifyUrl: string;
-  editUrl: string;
-  deleteUrl: string;
+  manageUrl: string;
 }
 
 export interface RequestUpdatedEmailData {
-  recipientName?: string;
   requestTitle: string;
   frontendUrl: string;
-  editUrl: string;
-  deleteUrl: string;
+  manageUrl: string;
+}
+
+export interface RequestDeletedEmailData {
+  requestTitle: string;
+  frontendUrl: string;
 }
 
 export interface RequestReplyEmailData {
@@ -35,19 +39,42 @@ export interface RequestReplyEmailData {
   senderName: string;
   senderEmail: string;
   message: string;
+  frontendUrl: string;
+  manageUrl: string;
 }
+
+export interface RequestHiddenEmailData {
+  requestTitle: string;
+  reason: string;
+  message: string | null;
+  frontendUrl: string;
+  manageUrl: string;
+}
+
+export interface ReportNotificationEmailData {
+  requestTitle: string;
+  requestSport: string;
+  reason: string;
+  comment: string | null;
+  openReports: number;
+  autoHidden: boolean;
+  adminUrl: string;
+}
+
+const TEMPLATE_DIR = path.join(__dirname, '..', '..', 'templates', 'emails');
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private transporter: nodemailer.Transporter;
+  private readonly templates = new Map<string, Handlebars.TemplateDelegate>();
 
   constructor(private configService: ConfigService) {
     this.initTransporter();
   }
 
   private initTransporter() {
-    const smtpConfig = {
+    this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>('SMTP_HOST'),
       port: Number(this.configService.get<string>('SMTP_PORT') ?? '587'),
       secure: this.configService.get<string>('SMTP_SECURE') === 'true',
@@ -57,12 +84,9 @@ export class EmailService {
       },
       tls: {
         rejectUnauthorized:
-          this.configService.get<string>('SMTP_TLS_REJECT_UNAUTHORIZED') !==
-          'false',
+          this.configService.get<string>('SMTP_TLS_REJECT_UNAUTHORIZED') !== 'false',
       },
-    };
-
-    this.transporter = nodemailer.createTransport(smtpConfig);
+    });
     this.verifyConnection();
   }
 
@@ -77,221 +101,100 @@ export class EmailService {
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
     try {
-      const mailOptions = {
+      const info = await this.transporter.sendMail({
         from: this.configService.get<string>('SMTP_FROM'),
         to: options.to,
         subject: options.subject,
         html: options.html,
         text: options.text || this.htmlToText(options.html),
-      };
-
-      const info = await this.transporter.sendMail(mailOptions);
-      this.logger.log(
-        `Email erfolgreich gesendet an ${options.to}: ${info.messageId}`,
-      );
+      });
+      this.logger.log(`Email erfolgreich gesendet an ${options.to}: ${info.messageId}`);
       return true;
     } catch (error) {
-      this.logger.error(
-        `Fehler beim Versenden der Email an ${options.to}:`,
-        error,
-      );
+      this.logger.error(`Fehler beim Versenden der Email an ${options.to}:`, error);
       return false;
     }
   }
 
-  async sendRequestCreatedEmail(
-    to: string,
-    data: RequestCreatedEmailData,
-  ): Promise<boolean> {
-    const html = this.renderTemplate('request-created', data);
-    return this.sendEmail({
-      to,
-      subject: `Sportpartnerbörse: E-Mail-Adresse für "${data.requestTitle}" bestätigen`,
-      html,
-    });
+  private send(to: string, subject: string, template: string, data: object, footnote?: string, text?: string) {
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
+    const body = this.render(template, data);
+    const html = this.render('layout', { subject, body, footnote, frontendUrl });
+    return this.sendEmail({ to, subject, html, text });
   }
 
-  async sendRequestUpdatedEmail(
-    to: string,
-    data: RequestUpdatedEmailData,
-  ): Promise<boolean> {
-    const html = this.renderTemplate('request-updated', data);
-    return this.sendEmail({
+  sendRequestCreatedEmail(to: string, data: RequestCreatedEmailData) {
+    return this.send(
       to,
-      subject: `Sportpartnerbörse: Deine Anfrage "${data.requestTitle}" wurde aktualisiert`,
-      html,
-    });
+      `Bitte bestätige deine Anfrage „${data.requestTitle}“`,
+      'request-created',
+      data,
+      'Du bekommst diese E-Mail, weil jemand mit dieser Adresse eine Anfrage auf Sportbuddy erstellt hat. Warst du das nicht, ignoriere sie einfach: Ohne Bestätigung wird nichts veröffentlicht.',
+    );
   }
 
-  async sendRequestDeletedEmail(
-    to: string,
-    requestTitle: string,
-  ): Promise<boolean> {
-    const html = this.renderTemplate('request-deleted', { requestTitle });
-    return this.sendEmail({
-      to,
-      subject: `Sportpartnerbörse: Deine Anfrage "${requestTitle}" wurde gelöscht`,
-      html,
-    });
+  sendRequestUpdatedEmail(to: string, data: RequestUpdatedEmailData) {
+    return this.send(to, `Deine Anfrage „${data.requestTitle}“ wurde gespeichert`, 'request-updated', data);
   }
 
-  async sendRequestReplyEmail(
-    to: string,
-    data: RequestReplyEmailData,
-  ): Promise<boolean> {
-    const html = this.renderTemplate('request-reply', data);
-    return this.sendEmail({
+  sendRequestDeletedEmail(to: string, data: RequestDeletedEmailData) {
+    return this.send(to, `Deine Anfrage „${data.requestTitle}“ wurde gelöscht`, 'request-deleted', data);
+  }
+
+  sendRequestReplyEmail(to: string, data: RequestReplyEmailData) {
+    return this.send(
       to,
-      subject: `Sportpartnerbörse: Neue Antwort auf "${data.requestTitle}"`,
-      html,
-      text: [
-        `Neue Antwort auf deine Anzeige "${data.requestTitle}" (${data.requestSport})`,
+      `Neue Nachricht zu „${data.requestTitle}“`,
+      'request-reply',
+      data,
+      undefined,
+      [
+        `Neue Nachricht zu deiner Anfrage "${data.requestTitle}" (${data.requestSport})`,
         `Name: ${data.senderName}`,
         `E-Mail: ${data.senderEmail}`,
         '',
         data.message,
+        '',
+        `Anfrage verwalten: ${data.manageUrl}`,
       ].join('\n'),
-    });
+    );
   }
 
-  async sendExpirationReminderEmail(
-    to: string,
-    data: { requestTitle: string; editUrl: string; daysLeft: number },
-  ): Promise<boolean> {
-    const html = this.renderTemplate('expiration-reminder', data);
-    return this.sendEmail({
-      to,
-      subject: `Sportpartnerbörse: Deine Anfrage läuft in ${data.daysLeft} Tagen ab`,
-      html,
-    });
+  sendRequestHiddenEmail(to: string, data: RequestHiddenEmailData) {
+    return this.send(to, `Deine Anfrage „${data.requestTitle}“ wurde ausgeblendet`, 'request-hidden', data);
   }
 
-  private renderTemplate(templateName: string, data: unknown): string {
-    try {
-      const templatePath = path.join(
-        __dirname,
-        '..',
-        '..',
-        'templates',
-        'emails',
-        `${templateName}.hbs`,
-      );
+  sendReportNotificationEmail(to: string, data: ReportNotificationEmailData) {
+    return this.send(to, `Sportbuddy-Meldung: „${data.requestTitle}“`, 'report-notification', data);
+  }
 
-      if (!fs.existsSync(templatePath)) {
-        this.logger.warn(
-          `Template nicht gefunden: ${templatePath}, verwende Fallback`,
-        );
-        return this.getFallbackTemplate(
-          templateName,
-          data as Record<string, string>,
-        );
-      }
-
-      const templateContent = fs.readFileSync(templatePath, 'utf-8');
-      const handlebars = require('handlebars');
-      const template = handlebars.compile(templateContent);
-      return template(data);
-    } catch (error) {
-      this.logger.error(
-        `Fehler beim Rendern des Templates ${templateName}:`,
-        error,
-      );
-      return this.getFallbackTemplate(
-        templateName,
-        data as Record<string, string>,
-      );
+  private render(name: string, data: object): string {
+    let template = this.templates.get(name);
+    if (!template) {
+      const file = path.join(TEMPLATE_DIR, `${name}.hbs`);
+      template = Handlebars.compile(fs.readFileSync(file, 'utf-8'));
+      this.templates.set(name, template);
     }
-  }
-
-  private escapeHtml(str: string): string {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  private getFallbackTemplate(
-    templateName: string,
-    data: Record<string, string>,
-  ): string {
-    const e = (v: string) => this.escapeHtml(v ?? '');
-    switch (templateName) {
-      case 'request-created':
-        return `
-          <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-              <h2>E-Mail-Adresse bestätigen</h2>
-              <p>Hallo${data.recipientName ? ' ' + e(data.recipientName) : ''},</p>
-              <p>Deine Anfrage <strong>${e(data.requestTitle)}</strong> (${e(data.sportart)}) wurde erstellt und wartet auf Bestätigung.</p>
-              <p><a href="${e(data.verifyUrl)}" style="background:#3498db;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;">E-Mail bestätigen</a></p>
-              <p>Erst nach der Bestätigung ist deine Anfrage öffentlich sichtbar.</p>
-              <p>Du kannst deine Anfrage außerdem bearbeiten oder löschen:</p>
-              <ul>
-                <li><a href="${e(data.editUrl)}">Anfrage bearbeiten</a></li>
-                <li><a href="${e(data.deleteUrl)}">Anfrage löschen</a></li>
-              </ul>
-              <hr>
-              <p style="font-size: 12px; color: #666;">Hochschule Reutlingen - Sportpartnerbörse</p>
-            </body>
-          </html>
-        `;
-      case 'request-updated':
-        return `
-          <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-              <h2>Deine Anfrage wurde aktualisiert</h2>
-              <p>Hallo${data.recipientName ? ' ' + e(data.recipientName) : ''},</p>
-              <p>Deine Anfrage <strong>${e(data.requestTitle)}</strong> wurde erfolgreich aktualisiert.</p>
-              <p>Du kannst deine Anfrage weiterhin bearbeiten oder löschen:</p>
-              <ul>
-                <li><a href="${e(data.editUrl)}">Anfrage bearbeiten</a></li>
-                <li><a href="${e(data.deleteUrl)}">Anfrage löschen</a></li>
-              </ul>
-              <hr>
-              <p style="font-size: 12px; color: #666;">Hochschule Reutlingen - Sportpartnerbörse</p>
-            </body>
-          </html>
-        `;
-      case 'request-deleted':
-        return `
-          <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-              <h2>Deine Anfrage wurde gelöscht</h2>
-              <p>Deine Anfrage <strong>${e(data.requestTitle)}</strong> wurde erfolgreich gelöscht.</p>
-              <hr>
-              <p style="font-size: 12px; color: #666;">Hochschule Reutlingen - Sportpartnerbörse</p>
-            </body>
-          </html>
-        `;
-      case 'request-reply':
-        return `
-          <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-              <h2>Neue Antwort auf deine Anzeige</h2>
-              <p>Es gibt eine neue Antwort auf <strong>${e(data.requestTitle)}</strong> (${e(data.requestSport)}).</p>
-              <p><strong>Name:</strong> ${e(data.senderName)}</p>
-              <p><strong>E-Mail:</strong> ${e(data.senderEmail)}</p>
-              <p><strong>Nachricht:</strong></p>
-              <p style="white-space: pre-wrap;">${e(data.message)}</p>
-              <hr>
-              <p style="font-size: 12px; color: #666;">Hochschule Reutlingen - Sportpartnerbörse</p>
-            </body>
-          </html>
-        `;
-      default:
-        return `<p>${e(JSON.stringify(data))}</p>`;
-    }
+    return template(data);
   }
 
   private htmlToText(html: string): string {
     return html
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<title[\s\S]*?<\/title>/gi, '')
+      .replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, '$2 ($1)')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|h1|h2|tr|div)>/gi, '\n')
       .replace(/<[^>]*>/g, '')
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#x27;|&#39;/g, "'")
+      .replace(/&#x3D;/g, '=')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n\s*\n+/g, '\n\n')
       .trim();
   }
 }

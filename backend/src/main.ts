@@ -1,9 +1,16 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
+import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Behind the nginx proxy: take the client address from X-Forwarded-For set by private-network proxies.
+  app.set('trust proxy', 'loopback, linklocal, uniquelocal');
+
+  app.use(cookieParser());
 
   app.useGlobalPipes(
     new ValidationPipe({

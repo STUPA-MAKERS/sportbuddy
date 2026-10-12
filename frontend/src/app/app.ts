@@ -1,14 +1,16 @@
-import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { ToastComponent } from '@stupa-makers/ui-kit';
+import { ThemeService } from './shared/theme.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
-  templateUrl: './app.html',
-  styleUrl: './app.scss'
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterOutlet, ToastComponent],
+  template: `<router-outlet /><app-toast />`,
 })
 export class App {
-  title = 'Sportpartnerbörse - Hochschule Reutlingen';
-  currentYear = new Date().getFullYear();
+  // Applies the saved or preferred theme before the first screen renders.
+  protected readonly theme = inject(ThemeService);
 }

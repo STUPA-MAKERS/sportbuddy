@@ -1,0 +1,152 @@
+<div class="ld" [class.ld--detail-open]="!!id()">
+  <section class="ld-list" aria-labelledby="ph">
+    <div style="padding: 4px 4px 8px">
+      <div style="display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap">
+        <h1 class="ph-title" id="ph">Sportpartner finden</h1>
+        @if (loaded()) {
+          <span class="ph-meta num">{{ filtered() ? matches() + ' von ' + total() : total() + ' aktiv' }}</span>
+        }
+      </div>
+      <p class="ph-sub">Studierende der HS Reutlingen suchen Mitspieler:innen.</p>
+    </div>
+
+    <label class="sp">
+      <app-icon name="search" [size]="20" />
+      <input
+        #search
+        type="search"
+        placeholder="Titel oder Beschreibung durchsuchen"
+        aria-label="Anfragen durchsuchen"
+        [value]="q()"
+        (input)="q.set($any($event.target).value)"
+        (keydown.escape)="q.set('')"
+      />
+      @if (q()) {
+        <button class="icbtn icbtn--sm" type="button" aria-label="Suche leeren" (click)="q.set(''); search.focus()">
+          <app-icon name="x" [size]="16" />
+        </button>
+      } @else {
+        <span class="kbd hide-phone" aria-hidden="true">/</span>
+      }
+    </label>
+
+    <div class="chips" role="group" aria-label="Nach Sportart filtern">
+      <button type="button" class="chip" [class.on]="!sport()" [attr.aria-pressed]="!sport()" (click)="pickSport(null)">
+        @if (!sport()) { <app-icon name="check" [size]="15" /> }
+        Alle <span class="n">{{ total() }}</span>
+      </button>
+      @for (s of chips().shown; track s.name) {
+        <button
+          type="button"
+          class="chip"
+          [class.on]="sport() === s.name"
+          [attr.aria-pressed]="sport() === s.name"
+          (click)="pickSport(s.name)"
+        >
+          @if (sport() === s.name) { <app-icon name="check" [size]="15" /> }
+          {{ s.name }} <span class="n">{{ s.count }}</span>
+        </button>
+      }
+      @if (chips().more > 0) {
+        <button type="button" class="chip" [attr.aria-expanded]="false" (click)="showAllChips.set(true)">
+          Weitere {{ chips().more }} <app-icon name="chevron-down" [size]="15" />
+        </button>
+      } @else if (showAllChips()) {
+        <button type="button" class="chip" [attr.aria-expanded]="true" (click)="showAllChips.set(false)">
+          Weniger <app-icon name="chevron-up" [size]="15" />
+        </button>
+      }
+    </div>
+
+    @if (failed() && !items().length) {
+      <div class="note note--err" role="alert">
+        <app-symbol name="warning" [size]="18" />
+        <span>Die Anfragen konnten nicht geladen werden. Bitte lade die Seite neu.</span>
+      </div>
+    } @else if (!loaded() && showSkeleton()) {
+      <div class="list" aria-hidden="true" style="margin-top: 4px">
+        @for (w of [62, 74, 55, 68]; track $index) {
+          <div class="li li--skeleton">
+            <span class="tile" style="background: var(--color-surface-3)"></span>
+            <span class="li-body" style="gap: 8px">
+              <span class="skel" [style.width.%]="w" style="height: 12px"></span>
+              <span class="skel" style="height: 10px; width: 34%"></span>
+            </span>
+          </div>
+        }
+      </div>
+    } @else if (loaded() && !items().length) {
+      <div class="es" style="margin-top: 4px">
+        <span class="done-ic"><app-symbol [name]="sport() ? iconFor(sport()!) : 'explore'" [size]="28" [fill]="true" /></span>
+        @if (filtered()) {
+          <h2>
+            Keine Anfrage
+            @if (q().trim()) { zu „{{ q().trim() }}“ }
+            @if (sport()) { in {{ sport() }} }
+          </h2>
+        } @else {
+          <h2>Noch keine Anfragen</h2>
+        }
+        <p>Erstelle selbst eine Anfrage. Sobald jemand antwortet, bekommst du eine E-Mail.</p>
+        <div class="actions" style="justify-content: center; margin-top: 12px">
+          <a class="btnlink btnlink--fill" routerLink="/erstellen"><app-symbol name="add" [size]="18" />Anfrage erstellen</a>
+          @if (filtered()) {
+            <button class="btnlink btnlink--text" type="button" (click)="resetFilters()" style="border: 0; background: none; font: inherit; font-weight: 600">
+              Filter zurücksetzen
+            </button>
+          }
+        </div>
+      </div>
+    } @else {
+      <div>
+        @for (g of groups(); track g.label) {
+          <h2 class="li-group">{{ g.label }}</h2>
+          <div class="list">
+            @for (r of g.items; track r.id) {
+              <a
+                class="li"
+                [class.on]="r.id === selectedId()"
+                [attr.aria-current]="r.id === selectedId() ? 'true' : null"
+                [routerLink]="['/anfrage', r.id]"
+                queryParamsHandling="preserve"
+              >
+                <span class="tile"><app-symbol [name]="iconFor(r.sport)" [fill]="r.id === selectedId()" /></span>
+                <span class="li-body">
+                  <span class="li-title ell" [title]="r.title">{{ r.title }}</span>
+                  <span class="li-sub ell">{{ subtitle(r) }}</span>
+                </span>
+                <span class="li-trail">{{ ago(r.createdAt) }}</span>
+              </a>
+            }
+          </div>
+        }
+        @if (hasMore()) {
+          <div style="display: flex; justify-content: center; padding: 16px 0 4px">
+            <button class="btnlink btnlink--outlined" type="button" (click)="loadMore()" [disabled]="loadingMore()" style="font: inherit; font-weight: 600; cursor: pointer">
+              {{ loadingMore() ? 'Lädt …' : 'Mehr laden' }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  @if (detail().request; as request) {
+    <app-request-detail class="ld-detail sheet" [request]="request" [icon]="iconFor(request.sport)" (closed)="closeDetail()" />
+  } @else if (detail().missing) {
+    <section class="ld-detail sheet">
+      <div class="sheet-bar">
+        <span class="kicker"></span>
+        <button class="icbtn" type="button" aria-label="Schließen" (click)="closeDetail()"><app-icon name="x" [size]="19" /></button>
+      </div>
+      <div class="es" style="background: none; padding-top: 16px">
+        <span class="done-ic done-ic--warn"><app-symbol name="hourglass_empty" [size]="28" /></span>
+        <h2>Diese Anfrage gibt es nicht mehr</h2>
+        <p>Sie wurde gelöscht, ist abgelaufen oder wurde ausgeblendet.</p>
+        <div class="actions" style="justify-content: center">
+          <a class="btnlink btnlink--outlined" routerLink="/">Alle Anfragen</a>
+        </div>
+      </div>
+    </section>
+  }
+</div>
