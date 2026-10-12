@@ -9,6 +9,11 @@ import {
 import { RequestEntity } from './request.entity';
 
 @Entity({ name: 'reports' })
+// One open report per reporter and request; also holds under parallel requests.
+@Index('UQ_reports_open_per_reporter', ['requestId', 'reporterHash'], {
+  unique: true,
+  where: '"dismissed" = false AND "reporterHash" IS NOT NULL',
+})
 export class ReportEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

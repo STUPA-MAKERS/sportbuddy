@@ -185,7 +185,15 @@ export class RequestsService {
         return { duplicate: true, autoHidden: false, openReports: await this.openReportCount(request.id) };
       }
     }
-    await this.reports.save(this.reports.create({ requestId: request.id, reason, comment, reporterHash }));
+    try {
+      await this.reports.insert(this.reports.create({ requestId: request.id, reason, comment, reporterHash }));
+    } catch (error) {
+      // A parallel report from the same reporter won the unique index.
+      if ((error as { code?: string }).code === '23505') {
+        return { duplicate: true, autoHidden: false, openReports: await this.openReportCount(request.id) };
+      }
+      throw error;
+    }
     await this.log(request.id, 'reported', null, reason);
     const openReports = await this.openReportCount(request.id);
     if (autoHideThreshold > 0 && openReports >= autoHideThreshold && !request.hidden) {

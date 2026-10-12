@@ -140,15 +140,19 @@ export class DiscoverComponent {
   protected loadMore() {
     if (this.loadingMore()) return;
     this.loadingMore.set(true);
+    const q = this.q();
+    const sport = this.sport();
     this.api
-      .list({ q: this.q(), sport: this.sport(), skip: this.items().length })
+      .list({ q, sport, skip: this.items().length })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => {
+          this.loadingMore.set(false);
+          // The filter changed meanwhile; this page belongs to the old results.
+          if (q.trim() !== this.q().trim() || sport !== this.sport()) return;
           const known = new Set(this.items().map((r) => r.id));
           this.items.update((items) => [...items, ...result.items.filter((r) => !known.has(r.id))]);
           this.matches.set(result.total);
-          this.loadingMore.set(false);
         },
         error: () => this.loadingMore.set(false),
       });
