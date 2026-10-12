@@ -41,6 +41,18 @@ export interface AdminSettings {
   notifyOnReport: boolean;
   moderationEmail: string | null;
   adminGroup: string;
+  /** Everyone who signed in with the admin group. */
+  moderators: Moderator[];
+  /** Addresses that get moderation emails. */
+  recipients: string[];
+}
+
+export interface Moderator {
+  sub: string;
+  name: string;
+  email: string | null;
+  notify: boolean;
+  lastLoginAt: string;
 }
 
 export interface AdminSport {
@@ -139,6 +151,10 @@ export class AdminApiService {
 
   saveSettings(body: Partial<AdminSettings>) {
     return this.http.put<AdminSettings>(`${this.base}/settings`, body);
+  }
+
+  setModeratorNotify(sub: string, notify: boolean) {
+    return this.http.put<AdminSettings>(`${this.base}/moderators/${encodeURIComponent(sub)}`, { notify });
   }
 
   sports() {

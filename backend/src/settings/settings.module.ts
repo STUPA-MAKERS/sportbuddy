@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlockedEmailEntity } from './blocked-email.entity';
+import { ModeratorEntity } from './moderator.entity';
 import { SettingsEntity } from './settings.entity';
 import { SettingsService } from './settings.service';
 import { SportEntity } from './sport.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SettingsEntity, SportEntity, BlockedEmailEntity]),
+    TypeOrmModule.forFeature([SettingsEntity, SportEntity, BlockedEmailEntity, ModeratorEntity]),
   ],
   providers: [SettingsService],
   exports: [SettingsService],

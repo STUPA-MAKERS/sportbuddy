@@ -28,6 +28,7 @@ import {
   BulkDto,
   CreateSportDto,
   HideDto,
+  ModeratorNotifyDto,
   ReorderDto,
   SettingsDto,
   UpdateSportDto,
@@ -188,7 +189,21 @@ export class AdminController {
       notifyOnReport: s.notifyOnReport,
       moderationEmail: this.config.get<string>('MODERATION_EMAIL') || null,
       adminGroup: this.auth.adminGroup,
+      moderators: (await this.settings.listModerators()).map((m) => ({
+        sub: m.sub,
+        name: m.name,
+        email: m.email,
+        notify: m.notify,
+        lastLoginAt: m.lastLoginAt,
+      })),
+      recipients: await this.settings.moderationRecipients(this.config.get<string>('MODERATION_EMAIL')),
     };
+  }
+
+  @Put('moderators/:sub')
+  async setModeratorNotify(@Param('sub') sub: string, @Body() body: ModeratorNotifyDto) {
+    await this.settings.setModeratorNotify(sub, body.notify);
+    return this.getSettings();
   }
 
   @Put('settings')

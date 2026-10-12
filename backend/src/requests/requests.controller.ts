@@ -254,17 +254,22 @@ export class RequestsController {
       settings.autoHideThreshold,
       this.reporterHash(ip),
     );
-    const moderationEmail = this.config.get<string>('MODERATION_EMAIL');
-    if (!duplicate && settings.notifyOnReport && moderationEmail) {
-      await this.emailService.sendReportNotificationEmail(moderationEmail, {
-        requestTitle: request.title,
-        requestSport: request.sport,
-        reason: body.reason,
-        comment,
-        openReports,
-        autoHidden,
-        adminUrl: `${this.frontendUrl}/admin/moderation/${request.id}`,
-      });
+    if (!duplicate && settings.notifyOnReport) {
+      // One email per moderator, so no one sees the others' addresses.
+      const recipients = await this.settings.moderationRecipients(this.config.get<string>('MODERATION_EMAIL'));
+      await Promise.all(
+        recipients.map((to) =>
+          this.emailService.sendReportNotificationEmail(to, {
+            requestTitle: request.title,
+            requestSport: request.sport,
+            reason: body.reason,
+            comment,
+            openReports,
+            autoHidden,
+            adminUrl: `${this.frontendUrl}/admin/moderation/${request.id}`,
+          }),
+        ),
+      );
     }
     return { success: true };
   }

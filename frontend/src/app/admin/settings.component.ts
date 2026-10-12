@@ -7,7 +7,7 @@ import { errorMessage } from '../shared/api.service';
 import { shortDate } from '../shared/format';
 import { SymbolComponent } from '../shared/symbol.component';
 import { SPORT_ICONS } from '../shared/symbols.generated';
-import { AdminApiService, AdminSettings, AdminSport, BlockedEmail } from './admin-api.service';
+import { AdminApiService, AdminSettings, AdminSport, BlockedEmail, Moderator } from './admin-api.service';
 
 interface SportDraft {
   id: number | null;
@@ -83,6 +83,16 @@ export class SettingsComponent {
 
   protected toggle(key: 'reviewBeforePublish' | 'notifyOnReport', value: boolean) {
     this.save({ [key]: value });
+  }
+
+  protected setNotify(m: Moderator, notify: boolean) {
+    this.admin.setModeratorNotify(m.sub, notify).subscribe({
+      next: (s) => {
+        this.applySettings(s);
+        this.toast.success(notify ? `${m.name} bekommt Moderations-E-Mails` : `${m.name} bekommt keine Moderations-E-Mails mehr`);
+      },
+      error: (e) => this.fail(e),
+    });
   }
 
   private save(changes: Partial<AdminSettings>) {

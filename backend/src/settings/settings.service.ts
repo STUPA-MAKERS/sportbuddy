@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DEFAULT_SPORTS } from '../requests/sports.constants';
 import { BlockedEmailEntity } from './blocked-email.entity';
+import { ModeratorEntity } from './moderator.entity';
 import { SettingsEntity } from './settings.entity';
 import { SportEntity } from './sport.entity';
 
@@ -33,6 +34,20 @@ export function normalizeBlockedPattern(raw: string): string {
   return p;
 }
 
+/**
+ * Who gets moderation emails: moderators with an address who did not opt out, plus the
+ * comma separated MODERATION_EMAIL. Lower case, without duplicates.
+ */
+export function moderationRecipients(
+  moderators: Pick<ModeratorEntity, 'email' | 'notify'>[],
+  extra: string | undefined,
+): string[] {
+  const fromEnv = (extra ?? '').split(/[,;\s]+/);
+  const fromLogin = moderators.filter((m) => m.notify).map((m) => m.email ?? '');
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return [...new Set([...fromLogin, ...fromEnv].map((e) => e.trim().toLowerCase()).filter((e) => valid.test(e)))];
+}
+
 @Injectable()
 export class SettingsService implements OnModuleInit {
   private readonly logger = new Logger(SettingsService.name);
@@ -44,6 +59,8 @@ export class SettingsService implements OnModuleInit {
     private readonly sportRepo: Repository<SportEntity>,
     @InjectRepository(BlockedEmailEntity)
     private readonly blockedRepo: Repository<BlockedEmailEntity>,
+    @InjectRepository(ModeratorEntity)
+    private readonly moderatorRepo: Repository<ModeratorEntity>,
   ) {}
 
   async onModuleInit() {
@@ -163,5 +180,42 @@ export class SettingsService implements OnModuleInit {
   async isBlocked(email: string): Promise<boolean> {
     const all = await this.blockedRepo.find();
     return all.some((b) => matchesBlockedPattern(email, b.pattern));
+  }
+
+  // --- moderators ----------------------------------------------------------
+
+  /** Records a successful admin login; keeps the person's notification choice. */
+  async recordModerator(user: { sub: string; name: string; email: string | null }) {
+    const existing = await this.moderatorRepo.findOne({ where: { sub: user.sub } });
+    await this.moderatorRepo.save(
+      this.moderatorRepo.create({
+        ...existing,
+        sub: user.sub,
+        name: user.name.slice(0, 200),
+        email: user.email?.slice(0, 254) ?? null,
+        notify: existing?.notify ?? true,
+        lastLoginAt: new Date(),
+      }),
+    );
+  }
+
+  /** Someone signed in without the admin group: they no longer get moderation emails. */
+  async forgetModerator(sub: string) {
+    await this.moderatorRepo.delete({ sub });
+  }
+
+  listModerators() {
+    return this.moderatorRepo.find({ order: { name: 'ASC' } });
+  }
+
+  async setModeratorNotify(sub: string, notify: boolean) {
+    const moderator = await this.moderatorRepo.findOne({ where: { sub } });
+    if (!moderator) throw new NotFoundException('Unbekannte Person.');
+    moderator.notify = notify;
+    await this.moderatorRepo.save(moderator);
+  }
+
+  async moderationRecipients(extra: string | undefined) {
+    return moderationRecipients(await this.moderatorRepo.find(), extra);
   }
 }
